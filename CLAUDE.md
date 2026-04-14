@@ -1,10 +1,10 @@
 # CLAUDE.md — Electracom Smart Point Reference Tool
 
 > Working memory file for Claude. Updated as the tool evolves.
-> **Current version on disk:** v17 (`Electracom_Smart_Point_Reference_v17.html`, single-file HTML, ~1,683 lines, ~538 KB). **HTML-only, no backend.** All data baked in as JS objects; state persisted to `localStorage`.
-> **Status:** v17 built 14 Apr 2026 from a full Dylan-docx ↔ HTML gap audit. First pass fixed two issues: (1) v16 carried five user-visible `v15` strings into export filenames + the JSON `version` field; (2) Dylan's [V1] was only partially honoured — INFO was stripped but six structural checks were still labelled `warning` and buried in a collapsible. v17 promoted them to `error`. A second pass (v17.1, same file) closed the three remaining **strict-reading gaps** so the app now matches Dylan's wording exactly: (a) [V1] last info + last warning promoted to error, validation stats card drops the "Warnings" tile → zero INFO/WARNING surfaces anywhere; (b) [E1] "Gap Analysis" summary line rewritten as "Coverage: N of M standard DBO points captured · Z extra" — the words "required" and "optional" no longer appear in render; (c) [U1] live validation panel added under the Submit Points form so the design engineer sees DBO-compliance feedback as they type, closing Dylan's "give them confirmation if their suggested names are correct or not". All Dylan-docx items (B1–B6, L1–L4, E1, U1, V1, D1, D5) now verified ✅ against v17 HTML. See §4 gap matrix.
-> **Version note:** v13 shipped Dylan's §4 written feedback except the two "ADD ON FOR LATER" / "Confirmation" items. v14 added both ([D1] subtype drill-down + [D5] auto-sync). v15 was a QOL/nav/export hardening layer. v16 fixed the font toggle (CSS `zoom`) and tender calculator (Typical/Max). v17 is a Dylan-alignment + export-versioning correctness pass on top of v16. No new features.
-> **Last updated:** 14 April 2026 (post-v17 build)
+> **Current version on disk:** v18 (`Electracom_Smart_Point_Reference_v18.html`, single-file HTML, ~1,926 lines, ~571 KB). **HTML-only, no backend.** All data baked in as JS objects; state persisted to `localStorage`.
+> **Status:** v18 built 14 Apr 2026 on top of v17.1. It keeps the Dylan-aligned v17.1 baseline and starts the previously deferred work: (1) a new standalone `catalog` section for subtype records, (2) browser-local manufacturer / model / notes capture via `epl10_catalogMeta`, (3) suggested point mappings driven by `EQ.standards` plus observed points, and (4) browser-local MSI sign-in replacing the old raw `epl10_admin` toggle. This means [D2], [D3], and [D4] are now started in the current build, while [D6] is only partially addressed because the app is still static HTML with no backend / SSO. See §4 gap matrix.
+> **Version note:** v13 shipped Dylan's §4 written feedback except the two "ADD ON FOR LATER" / "Confirmation" items. v14 added both ([D1] subtype drill-down + [D5] auto-sync). v15 was a QOL/nav/export hardening layer. v16 fixed the font toggle (CSS `zoom`) and tender calculator (Typical/Max). v17 / v17.1 were Dylan-alignment and export-versioning correctness passes. v18 is the first pass at the previously deferred catalogue / mapping / auth work.
+> **Last updated:** 14 April 2026 (post-v18 build)
 
 ---
 
@@ -32,7 +32,7 @@ Parallel project: **Device Qualification / Testing Tool** — *higher* priority,
 
 ## 3. v15 architecture (what we're working with)
 
-Single HTML file. No backend. All data baked in as JS objects. Heavy use of `localStorage` for role + tender estimates + DBO sync metadata + admin flag + pending queue.
+Single HTML file. No backend. All data baked in as JS objects. Heavy use of `localStorage` for role + tender estimates + DBO sync metadata + pending queue + browser-local catalogue metadata + browser-local auth.
 
 ### 3.1 Data model
 
@@ -93,10 +93,13 @@ Persisted in `localStorage`:
 - `epl10_role` — selected role
 - `epl10_a` — manually added points
 - `epl10_tender` — saved tender estimates
-- `epl10_admin` — admin flag (`'1'` / `'0'`)
 - `epl10_pending` — pending submission queue (for [U1] flow)
 - `epl10_dboSync` — v14 [D5]: `{lastSync, fieldCount, autoSchedule, intervalDays}`
 - `epl10_fsz` — **NEW in v15**: font size preference (`sm`/`md`/`lg`)
+- `epl10_catalogMeta` — **NEW in v18**: browser-local manufacturer / model / notes metadata for subtype catalogue rows
+- `epl10_auth_users` — **NEW in v18**: browser-local MSI sign-in user store
+- `epl10_auth_session` — **NEW in v18**: browser-local MSI sign-in session
+- `epl10_admin` — legacy admin flag used by pre-v18 builds; superseded in v18 by browser-local sign-in
 - `t` — theme
 
 ### 3.3 Sections (unchanged from v13)
@@ -105,6 +108,7 @@ Persisted in `localStorage`:
 |---------------|--------------------|-----------------------------------------------------------------------|
 | `library`     | Point Library      | System-tabbed table, search/filter/dedup, CSV/Excel export            |
 | `equipment`   | By Equipment       | Card grid + gap analysis + **subtype drill-down (v14 [D1])**         |
+| `catalog`     | Subtype Catalogue  | **NEW in v18** standalone subtype records + metadata + suggested mappings |
 | `projects`    | Projects           | Per-project comparison cards                                           |
 | `builder`     | Name Builder       | Free-text input + 7 dropdowns (descriptor repeatable per [B2])        |
 | `lookup`      | DBO Lookup         | Two-column field/subfield search                                       |
@@ -167,6 +171,17 @@ Same v17 file, in-place patch after Rajesh asked for full Dylan alignment with n
   - Has errors → count + each error line with the existing `val-err` badge, matching the Validation section's styling so the user learns the same vocabulary before submitting.
   - The existing submit-time toast-block (line 416–417) is preserved as a backstop, but the design engineer now sees the result *while they type* — which is what Dylan asked for.
 
+### 3.12 v18 additions — subtype catalogue, metadata, and browser-local auth
+
+v18 is the first pass at the items that had previously sat in the deferred bucket:
+
+- **Standalone `catalog` section** — new `S.sec === 'catalog'` render path with its own breadcrumb branch, home card, grouped-nav entry, search/filter toolbar, and "Open In Equipment" handoff.
+- **Subtype catalogue data model** — `buildSubtypeCatalog()`, `getCatalogEntry()`, and `getSubtypeRows()` derive asset/subtype records from the existing point library. Rows are keyed as `asset||subtype`.
+- **Browser-local manufacturer/model metadata** — `epl10_catalogMeta` stores `manufacturer`, `model`, and `notes` per subtype record. This is not a shared backend database; it is browser-local only.
+- **Suggested mappings** — `getCatalogMappings()` combines `EQ.standards` with observed point names to show required, optional, and extra observed points. This is a practical suggestion layer, not a Tim/Dylan-approved exhaustive mapping exercise yet.
+- **Browser-local MSI sign-in** — `epl10_auth_users` + `epl10_auth_session` replace the old raw `epl10_admin` toggle. Admin-gated actions now call `ensureAdmin(...)`. This is stronger than a trust toggle, but it is still not real SSO / backend auth.
+- **Role guidance update** — Commissioning Engineer now recommends `catalog` in addition to `equipment` and `builder`.
+
 ### 3.10 v17 additions — Dylan-alignment + export version cleanup
 
 Two targeted fixes on top of v16. Built 14 Apr 2026 from a line-by-line audit of `Point naming tool comments.docx` against the v16 HTML.
@@ -210,9 +225,9 @@ Two targeted fixes on top of v15. Neither adds new features; both fix bugs Rajes
 
 ---
 
-## 4. Dylan-docx ↔ HTML gap matrix (audited 14 Apr 2026 against v17)
+## 4. Dylan-docx ↔ HTML gap matrix (audited 14 Apr 2026 against v18)
 
-Every Dylan-docx item below was verified by direct grep against the v17 HTML. Source: `Point naming tool comments.docx` (extracted to `_docx_extract/dylan_comments.txt`, 56 lines) + the 10 Apr call.
+Every Dylan-docx item below was verified by direct grep against the current HTML build. Source: `Point naming tool comments.docx` (extracted to `_docx_extract/dylan_comments.txt`, 56 lines) + the 10 Apr call.
 
 | ID  | Dylan asks for                                              | v17 HTML location                              | Verified |
 |-----|--------------------------------------------------------------|------------------------------------------------|----------|
@@ -232,13 +247,13 @@ Every Dylan-docx item below was verified by direct grep against the v17 HTML. So
 | D1  | AHU subtype drill-down (e.g. SystemAir AHU)                 | `assetSubtypes` index ~line 215, pill bar lines 1227–1236 | ✅ |
 | D5  | Auto-check for DBO field/subfield updates + confirmation    | `getDboSyncMeta`/`syncDBO`/auto-trigger ~line 1196 + sync pill line 1024–1028 | ✅ |
 
-**Not yet implemented (still deferred to a later bucket):**
+**v18 status on the previously deferred bucket:**
 | ID  | Dylan asks for                                              | Status |
 |-----|--------------------------------------------------------------|--------|
-| D2  | Fan-coil-unit database with model/manufacturer metadata     | Generic only — no manufacturer DB |
-| D3  | Standalone subtype page                                     | Drill-down lives inside Equipment panel instead (lighter touch agreed on call) |
-| D4  | Auto-mapping of every applicable DBO point to every asset type | Needs the Tim/Dylan blocked-out exercise |
-| D6  | Real auth (SSO etc.)                                        | Trust-based localStorage admin flag still applies |
+| D2  | Fan-coil-unit database with model/manufacturer metadata     | **Started in v18** via `catalog` + `epl10_catalogMeta`, but still browser-local metadata rather than a shared manufacturer DB |
+| D3  | Standalone subtype page                                     | **Started in v18** via the new `catalog` section |
+| D4  | Auto-mapping of every applicable DBO point to every asset type | **Started in v18** as suggested mappings from `EQ.standards` + observed points, but still not the full Tim/Dylan mapping exercise |
+| D6  | Real auth (SSO etc.)                                        | **Partially addressed in v18** with browser-local MSI sign-in; still not real SSO / backend auth |
 
 ### 4.0 Original Dylan-docx item list (preserved for traceability)
 
@@ -282,11 +297,11 @@ This consolidates Dylan's `.docx` + the 10 Apr call transcript. All items now la
 ### 4.9 Previously DEFERRED — re-evaluated for v14
 
 - **[D1]** Per-manufacturer (SystemAir, Daikin) AHU drill-down. **✅ landed in v14** as a subtype pill bar. Implementation note below.
-- **[D2]** Fan-coil-unit database with model/manufacturer metadata. Still **not in v14** — generic only.
-- **[D3]** Standalone subtype page. Still **not in v14** — drill-down lives inside the equipment panel instead.
-- **[D4]** Auto-mapping of every applicable DBO point to every asset type. Still **not in v14** — needs the Tim/Dylan exercise.
+- **[D2]** Fan-coil-unit database with model/manufacturer metadata. **Started in v18** as browser-local subtype metadata (`epl10_catalogMeta`), but still not a shared manufacturer DB.
+- **[D3]** Standalone subtype page. **Started in v18** as the new `catalog` section.
+- **[D4]** Auto-mapping of every applicable DBO point to every asset type. **Started in v18** as suggested mappings, but still needs the Tim/Dylan exercise for a full approved mapping matrix.
 - **[D5]** Confirmation around DBO auto-update (`syncDBO()`). **✅ landed in v14**. See §5 below for the full implementation.
-- **[D6]** Real auth (proper login). Still **not in v14** — trust-based admin flag still applies. Harden before wider rollout.
+- **[D6]** Real auth (proper login). **Partially addressed in v18** with browser-local MSI sign-in; still needs backend / SSO before wider rollout.
 
 ---
 
@@ -347,6 +362,7 @@ v14's §10 backlog is fully cleared, plus a layer of navigation / export / acces
 - v16: 1,658 lines, ~536 KB (+31 lines, +3 KB over v15)
 - v17 initial pass: 1,658 lines (in-place severity flips + version-string bumps)
 - v17.1 (current): 1,683 lines, ~538 KB (+25 lines for `uploadValidate()` function + live validation panel HTML + strict-reading edits)
+- v18 (current working build): 1,926 lines, ~571 KB (+243 lines over v17.1 for catalogue, metadata, mapping, and browser-local auth work)
 - JS parses cleanly (validated via `new Function(mainScript)` on 14 Apr v17.1 build); v15/v16/v17/v17.1 additions are grep-verifiable at the line numbers called out in §3.8, §3.9, §3.10, and §3.11.
 - Severity grep after v17.1: `sev:'warning'` = 0, `sev:'info'` = 0, `sev:'error'` = 14 (all structural / subfield-incorrect checks per Dylan's [V1]).
 
@@ -427,7 +443,8 @@ v15 §10 backlog items now resolved. Scope kept deliberately tight — Rajesh re
 
 | File                                            | Purpose                                                  |
 |-------------------------------------------------|----------------------------------------------------------|
-| `Electracom_Smart_Point_Reference_v17.html`     | **Current working version** — single-file app, ~536 KB, ~1,658 lines. Dylan-aligned, all export filenames bumped, structural validation promoted to errors. |
+| `Electracom_Smart_Point_Reference_v18.html`     | **Current working version** — single-file app, ~571 KB, ~1,926 lines. Adds standalone subtype catalogue, browser-local manufacturer/model metadata, suggested mappings, and browser-local MSI sign-in. |
+| `Electracom_Smart_Point_Reference_v17.html`     | Previous stable Dylan-aligned version. All export filenames bumped, structural validation promoted to errors, and strict-reading gaps closed in v17.1. |
 | `Electracom_Smart_Point_Reference_v16.html`     | Previous version. Font toggle + tender calculator fixed but still carried five `v15` strings into export filenames + JSON version field. v17 cleans those up. |
 | `Electracom_Smart_Point_Reference_v15.html`     | Nav/QOL/export layer. Font toggle had no visible effect; tender calculator returned worst-case as "standard". |
 | `Electracom_Smart_Point_Reference_v14.html`     | Dylan-docx fully aligned: [D1] subtype drill-down + [D5] DBO auto-sync landed |
@@ -446,7 +463,7 @@ v15 §10 backlog items now resolved. Scope kept deliberately tight — Rajesh re
 ## 9. Open questions for the next call
 
 - For the upload-and-validate workflow: does John want email notification on submission, or just an in-tool queue?
-- Admin auth — for wider rollout, does this need real auth (e.g. SSO), or is the trust-based localStorage flag acceptable indefinitely?
+- Admin auth — v18 now has browser-local MSI sign-in. For wider rollout, does this need real auth (e.g. SSO), or is browser-local sign-in acceptable as an interim step only?
 - For asset rollup `[A1]`: should historic project records keep their original `AHU TYPE-1` label *only* in the subtype column, or also in a "legacy_label" field for full traceability?
 - The asset → DBO point mapping exercise — when can Dylan/Tim block out time for it?
 - v14 [D1] currently drills down by *subtype string* (the original asset_type variant). Is the next step to surface a `manufacturer` column on points, or to derive it from system_owner_comments where it's mentioned? Worth a five-minute conversation with Dylan.
@@ -454,7 +471,7 @@ v15 §10 backlog items now resolved. Scope kept deliberately tight — Rajesh re
 
 ---
 
-## 10. Known issues / cleanup backlog for v18
+## 10. Known issues / cleanup backlog for v19
 
 **Resolved in v17.1** (was the strict-reading gap list flagged after the initial v17 build):
 - ~~[U1] design engineer doesn't see "correct or not" feedback until submit~~ — ✅ fixed. Live `uploadValidate()` panel under the form shows DBO compliance as they type. See §3.11.
@@ -481,14 +498,14 @@ v15 §10 backlog items now resolved. Scope kept deliberately tight — Rajesh re
 - **Undo-on-delete timer edge case** — if the user clicks undo after the 10s window expires the toast may still be visible briefly. Low priority; 30-second check.
 - **Subtype-aware tender calculation** — the v16 Typical/Max toggle makes the numbers honest, but doesn't let the user pick "3 × AHU TYPE-1 specifically". If John asks for per-subtype sizing, the hook is `S.selSubtype` + reading from `EQ.equip[k].p[project]` rather than the rolled-up `uTyp`. Park until asked.
 - **Font toggle on very wide viewports** — `zoom` is clean in Chromium/Safari/Firefox-126+. If Rajesh finds an older Firefox in the wild, the `transform:scale` fallback kicks in but can clip scrollable areas at `lg`. Flag if it comes up.
-- **Dylan-docx [D2]/[D3]/[D4]/[D6]** still not addressed — waiting on Tim/Dylan block for the mapping exercise and a decision on real auth for wider rollout.
+- **D2 / D3 / D4 / D6 are only partially closed in v18** — catalogue and browser-local auth now exist, but the remaining gap is a shared manufacturer DB, a reviewed full mapping matrix, and real backend / SSO auth for wider rollout.
 - **Internal `V15_CSV_HDRS` constant + `'v15 schema'` toast** — both refer to a stable internal data shape, not the release version, so they're fine functionally. If we ever change the schema (e.g. add a 20th column), rename to `V18_CSV_HDRS` or better `EXPORT_HDRS` to break the version coupling.
 - **Pre-release version-string grep** — now part of the release checklist: `grep -nE "v1[3-6]|version:'v1[3-6]'" *.html` should return zero hits before drop. Caught the v17 export-path leftovers; would have caught the v16 title-tag regression too if it had existed earlier.
 - **`Point naming tool comments.docx` filename has spaces** — match exactly when scripting. Not a code change; just a gotcha for future automation.
 
 ---
 
-*Claude: v17.1 is the current state, built 14 Apr 2026 as an in-place patch on top of the initial v17 pass earlier the same day. The initial v17 closed the v16 export-string regressions and promoted six structural warnings to errors. v17.1 closed the three remaining strict-reading gaps so the app now matches Dylan's wording exactly with zero INFO/WARNING surfaces in validation, no "required/optional" language in the Equipment summary, and a live validation panel under the Submit form that gives design engineers real-time DBO-compliance feedback as they type. §4 gap matrix is fully ✅ across B1–B6, L1–L4, E1, V1, U1, D1, D5 — all verified by grep against the v17.1 HTML. Pre-demo checks: (1) open Validation and confirm the stats strip shows Errors / Clean / Custom Points Checked with no Warnings tile; (2) trigger errors in a sample point and verify they all land in the primary Errors table; (3) open Submit Points as a non-admin, type into the DBO name field and confirm the live panel updates; (4) open By Equipment, select any equipment type, confirm the blue summary says "Coverage: X of Y standard DBO points captured · Z extra"; (5) export CSV/Excel/JSON and confirm filenames all say `_v17_`. Next focus is the **w/c 20 Apr Carry demo** (avoid the 23rd). Keep §3.10, §3.11, §4, and §5.4 current as the code evolves.*
+*Claude: v18 is the current state, built 14 Apr 2026 on top of v17.1. v17.1 remains the Dylan-aligned baseline: zero INFO/WARNING surfaces in validation, no "required/optional" language in the Equipment summary, and a live validation panel under Submit. v18 adds the first pass at the deferred catalogue/auth work: a standalone `catalog` section, browser-local manufacturer/model/notes metadata, suggested mappings from standards plus observed points, and browser-local MSI sign-in in place of the old raw admin toggle. The remaining gap is that D2/D4/D6 are still not production-complete: metadata is local not shared, mappings are suggested not formally approved, and auth is still not SSO/backend. Pre-demo checks now include: (1) open `Subtype Catalogue` and confirm filtering / breadcrumb / "Open In Equipment" flow, (2) sign in as MSI admin and confirm edit gating works, (3) save catalogue metadata and verify it persists on refresh, (4) export CSV/Excel/JSON and confirm filenames all say `_v18_`, and (5) re-run the v17.1 validation checks listed above. Keep §3.12, §4, §8, and §10 current as the code evolves.*
 
 ---
 
