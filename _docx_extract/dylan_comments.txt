@@ -1,0 +1,56 @@
+Smart Point Tool Comments
+Table of Contents
+Uploading own set of points for validation1
+Note for design engineers1
+Tool DBO Updating2
+“In DBO” and “Not DBO Compliant”2
+Columns not required3
+Notes in Point Library – ADMIN ACCESS ONLY3
+By Equipment – Required section3
+DBO Point Name Builder Comments4
+Descriptors can be multiple4
+Aggregation and Aggregation Descriptor are in the wrong place4
+Measurement Descriptor before Measurement5
+Weird INFO bits5
+“Percentage” with status6
+Duplicate subfield names check7
+Uploading own set of points for validation
+Is there the functionality where the user can upload their own set of points for the tool to validate?
+Design engineer suggests some points, then uploads the point names. MSI would then approve it before it is added to the main point naming pool. 
+When they upload it, it would give them confirmation if their suggested names are correct or not.
+Note for design engineers
+**ADD ON FOR LATER ON
+Keep in mind that the design engineers would like to have a set list of AHU points for each type of AHU they deal with. In projects they come across all sorts of AHUs, so we would ideally like to get all the different types of AHU points and assign smart/DBO names. 
+E.g. if they are interfacing with a SystemAir AHU, they can then filter by SystemAir AHU points and then can potentially incorporate those points into their smart point schedules. Maybe by equipment can drill down into the different types of AHUs when the user clicks on AHU:
+Tool DBO Updating
+Confirmation – does the tool automatically check for DBO field and subfield updates?
+“In DBO” and “Not DBO Compliant”
+There should be a distinguishment between whether a point is currently within DBO and then whether the point is actually DBO compliant (e.g. using a subfield that doesn’t exist). 
+These should be two separate columns so the user can filter based on whether they need points that are currently in DBO.
+Columns not required
+Not required:
+Range, 
+access, 
+smart, 
+subtype – not required on the main page, this will be on a different page
+DBO Point Name – ONLY the point name, not the purple bit… 
+Notes in Point Library – ADMIN ACCESS ONLY
+By Equipment – Required section
+Remove required and optional, and just keep All Points section.
+DBO Point Name Builder Comments
+Descriptors can be multiple
+There can be multiple descriptors in DBO names, but the name builder only allows for one descriptor, so supply_air_temperature_sensor cannot be made as it has two descriptors.
+Aggregation and Aggregation Descriptor are in the wrong place
+Aggregation and Aggregation Descriptor, if applicable, are always at the start of the DBO name:
+Measurement Descriptor before Measurement
+Weird INFO bits
+The INFO comment seems to come up unnecessarily, e.g. supply_air_flowrate_status would always be a binary or a string (so not a numerical), but the following INFO comes up:
+Another example, the two “info” are not required here:
+Where did the INFO comments come from? Maybe we can review them if they are applicable or not. Another example below which is confusing:
+“Percentage” with status
+A common thing someone may do is put “_status” at the end of a analogue point name, e.g. 
+It would be good to flag up when people try this for analogue point names.
+Duplicate subfield names check
+ It should check for duplicate subfields being used in point names, as unlikely as this is.
+Point Naming Validation Section
+Don’t include INFO/WARNING parts, only the bits where the point subfields are incorrect or etc.
