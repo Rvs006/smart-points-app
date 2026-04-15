@@ -1036,19 +1036,23 @@ pre,code{white-space:pre-wrap;word-break:break-word;overflow-x:hidden}
             <div style="display:none" data-expl-wrong="c">"Because the expert said so" won't convince a design engineer in the morning of a site visit. The real reason is cross-project consistency.</div>
           </div>
 
-          <div class="quiz-question-block" data-correct="c">
-            <h3 class="quiz-question">The tool is a single HTML file with no backend. Why is that an intentional choice, not a limitation to work around?</h3>
+          <div class="quiz-question-block" data-correct="b">
+            <div class="scenario-context">
+              <span class="scenario-label">Scenario</span>
+              <p>You&rsquo;re heading out to site on a Tuesday morning. The plant room you&rsquo;re commissioning is two levels underground with no Wi-Fi. You need the Smart Point Reference to check point names against a panel.</p>
+            </div>
+            <h3 class="quiz-question">What do you do before you leave the office?</h3>
             <div class="quiz-options">
-              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>It saves on Electracom's cloud bill.</span></button>
-              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Because Rajesh hasn't built a backend yet.</span></button>
-              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Commissioning engineers often work in plant rooms with no Wi-Fi. A single file works offline, on any laptop, with no setup.</span></button>
-              <button class="quiz-option" data-value="d" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Because it's easier to email.</span></button>
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Bookmark the office intranet page &mdash; it&rsquo;ll probably work.</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Nothing special. The tool is a single HTML file &mdash; make sure it&rsquo;s on my laptop, and it just works offline.</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Print the whole Point Library and carry it as a PDF.</span></button>
+              <button class="quiz-option" data-value="d" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Sign in as admin so the data caches.</span></button>
             </div>
             <div class="quiz-feedback"></div>
-            <div style="display:none" data-expl-correct>Field usability drives the architecture. A hosted web app would fail the day someone's in a basement plant room with no signal.</div>
-            <div style="display:none" data-expl-wrong="a">Cost isn't the driver. The real reason is field-readiness.</div>
-            <div style="display:none" data-expl-wrong="b">A backend <em>is</em> on the roadmap (real MSI sign-in, shared manufacturer DB), but the single-file design works in the meantime specifically because of where the tool is used.</div>
-            <div style="display:none" data-expl-wrong="d">Email-friendliness is a nice side-effect, but not the reason.</div>
+            <div style="display:none" data-expl-correct>That&rsquo;s the whole point of the single-file design. Everything the tool needs &mdash; library, DBO vocabulary, validation rules, export paths &mdash; is inside the file. Open it from your laptop, it runs. No Wi-Fi, no login, no surprises.</div>
+            <div style="display:none" data-expl-wrong="a">A hosted intranet page fails the moment you lose signal. The tool avoids that by shipping everything in one HTML file.</div>
+            <div style="display:none" data-expl-wrong="c">You&rsquo;d be out of date the minute you left the office, and you&rsquo;d lose the search and validation features. Just bring the HTML file.</div>
+            <div style="display:none" data-expl-wrong="d">Admin sign-in unlocks edit actions, not offline capability &mdash; the tool is already fully offline without signing in.</div>
           </div>
 
           <div class="quiz-actions">
@@ -1332,16 +1336,22 @@ pre,code{white-space:pre-wrap;word-break:break-word;overflow-x:hidden}
           </div>
 
           <div class="quiz-question-block" data-correct="b">
-            <h3 class="quiz-question">A new project delivers data with equipment named "FAN EF-01". Where does it end up in By Equipment?</h3>
+            <div class="scenario-context">
+              <span class="scenario-label">Scenario</span>
+              <p>You&rsquo;re on site and need to check the points for an extract fan labelled <code>FAN EF-01</code> on the panel. You open By Equipment and look for it.</p>
+            </div>
+            <h3 class="quiz-question">Where do you find it?</h3>
             <div class="quiz-options">
-              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Under its own "FAN EF-01" entry — the tool doesn't recognise it.</span></button>
-              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Under "Fan", with "FAN EF-01" kept as the subtype variant.</span></button>
-              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Under "AHU", because fans are part of AHUs.</span></button>
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>It has its own "FAN EF-01" card &mdash; I look for that tile in the grid.</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Click the "Fan" card, then click the "FAN EF-01" pill inside the detail panel to narrow to just that subtype.</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Click the "AHU" card &mdash; extract fans usually live under AHUs.</span></button>
+              <button class="quiz-option" data-value="d" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Use the Point Library search and filter for "fan" &mdash; By Equipment won&rsquo;t show it.</span></button>
             </div>
             <div class="quiz-feedback"></div>
-            <div style="display:none" data-expl-correct>The regex <code>/^FAN (EF|SF|SEF)/i</code> matches "FAN EF-01", canonicalises to "Fan", and preserves the original name in the subtype column.</div>
-            <div style="display:none" data-expl-wrong="a">That's exactly what the ASSET_NORM rulebook is designed to prevent. The EF prefix is a recognised fan-type pattern.</div>
-            <div style="display:none" data-expl-wrong="c">Fans can live inside AHUs physically, but in DBO they're their own entity type.</div>
+            <div style="display:none" data-expl-correct>The tool collapses naming variants (FAN EF-01, FAN SF-02, FAN SEF-03) under one canonical card &mdash; &ldquo;Fan&rdquo;. Inside, a pill bar lists every variant seen on real projects; pick yours to narrow the point list.</div>
+            <div style="display:none" data-expl-wrong="a">The tool deliberately avoids showing a separate card per variant &mdash; the grid would have hundreds of duplicates. Look for the canonical &ldquo;Fan&rdquo; card instead.</div>
+            <div style="display:none" data-expl-wrong="c">Fans can physically sit inside AHUs, but the tool (and DBO) treat them as their own equipment family. Use the "Fan" card.</div>
+            <div style="display:none" data-expl-wrong="d">By Equipment <em>does</em> show it &mdash; just under the canonical "Fan" card, not a verbatim "FAN EF-01" card.</div>
           </div>
 
           <div class="quiz-question-block" data-correct="c">
@@ -1578,8 +1588,8 @@ pre,code{white-space:pre-wrap;word-break:break-word;overflow-x:hidden}
           <div class="val-row"><div class="vr-sample"><span class="val-icon">❌</span>_supply_air_temperature_sensor</div><div class="vr-reason">Starts with underscore.</div></div>
           <div class="val-row"><div class="vr-sample"><span class="val-icon">❌</span>1_supply_air_temperature_sensor</div><div class="vr-reason">Starts with a number.</div></div>
           <div class="val-row"><div class="vr-sample"><span class="val-icon">❌</span>supply_air_temperature_reading</div><div class="vr-reason">Doesn't end with a known point-type suffix (sensor, setpoint, command, status, alarm…).</div></div>
-          <div class="val-row"><div class="vr-sample"><span class="val-icon">❌</span>supply_air_temperature_status</div><div class="vr-reason"><strong>[B5]</strong> temperature is an analogue measurement — <code>_status</code> is for binary/string points. Try <code>_sensor</code>.</div></div>
-          <div class="val-row"><div class="vr-sample"><span class="val-icon">❌</span>supply_supply_air_temperature_sensor</div><div class="vr-reason"><strong>[B6]</strong> Subfield "supply" appears more than once — likely a typo.</div></div>
+          <div class="val-row"><div class="vr-sample"><span class="val-icon">❌</span>supply_air_temperature_status</div><div class="vr-reason"><strong>Semantic clash:</strong> temperature is an analogue measurement &mdash; <code>_status</code> is for binary/string points. Try <code>_sensor</code>.</div></div>
+          <div class="val-row"><div class="vr-sample"><span class="val-icon">❌</span>supply_supply_air_temperature_sensor</div><div class="vr-reason"><strong>Duplicate subfield:</strong> "supply" appears more than once &mdash; almost certainly a typo.</div></div>
           <div class="val-row ok"><div class="vr-sample"><span class="val-icon">✅</span>supply_air_temperature_sensor</div><div class="vr-reason">All four subfields are valid DBO terms. Clean bill of health.</div></div>
         </div>
       </section>
@@ -1592,7 +1602,7 @@ pre,code{white-space:pre-wrap;word-break:break-word;overflow-x:hidden}
         <div class="translation-block animate-in">
           <div class="translation-code">
             <span class="translation-label">validation rule</span>
-<pre><code><span class="code-comment">// [B5] Analogue point names ending in _status are usually wrong</span>
+<pre><code><span class="code-comment">// Analogue point names ending in _status are usually wrong</span>
 <span class="code-keyword">if</span>(lastSeg===<span class="code-string">'status'</span>){
  <span class="code-keyword">for</span>(<span class="code-keyword">var</span> ms=<span class="code-number">0</span>;ms&lt;segs.length-<span class="code-number">1</span>;ms++){
   <span class="code-keyword">if</span>(ANALOGUE_MEASUREMENTS[segs[ms]]){
@@ -1663,8 +1673,8 @@ pre,code{white-space:pre-wrap;word-break:break-word;overflow-x:hidden}
               <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Error: no known field named <code>return_air_humidity_status</code>.</span></button>
             </div>
             <div class="quiz-feedback"></div>
-            <div style="display:none" data-expl-correct>This is the [B5] analogue/_status clash. The engineer almost certainly means the humidity <em>reading</em>, which is a sensor.</div>
-            <div style="display:none" data-expl-wrong="a">The bricks are all in the subfield list — true. But the <em>combination</em> breaks a semantic rule. That's what the [B5] check is for.</div>
+            <div style="display:none" data-expl-correct>The validator catches this specific mix-up: an analogue measurement (humidity, temperature, pressure, flowrate&hellip;) paired with a <code>_status</code> suffix. The engineer almost certainly means the humidity <em>reading</em>, which is a sensor.</div>
+            <div style="display:none" data-expl-wrong="a">The bricks are all in the subfield list &mdash; true. But the <em>combination</em> breaks a semantic rule: <code>_status</code> is for on/off things, not for analogue measurements.</div>
             <div style="display:none" data-expl-wrong="c">The exact field missing from the published list is a softer issue — no longer raised as an error when the bricks themselves are valid. The real problem here is the semantic clash.</div>
           </div>
 
@@ -1681,17 +1691,23 @@ pre,code{white-space:pre-wrap;word-break:break-word;overflow-x:hidden}
             <div style="display:none" data-expl-wrong="c">DBO doesn't cap the length. The tool cares about the bricks, not the character count.</div>
           </div>
 
-          <div class="quiz-question-block" data-correct="c">
-            <h3 class="quiz-question">Why did every validation <em>warning</em> get promoted to an <em>error</em>?</h3>
+          <div class="quiz-question-block" data-correct="b">
+            <div class="scenario-context">
+              <span class="scenario-label">Scenario</span>
+              <p>It&rsquo;s Friday afternoon before a project handover. You open Validation and the table shows <strong>7 errors</strong> across the current library. None of the points were added by you.</p>
+            </div>
+            <h3 class="quiz-question">What&rsquo;s the right approach?</h3>
             <div class="quiz-options">
-              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>To make the tool feel stricter.</span></button>
-              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Because browsers stopped supporting warnings.</span></button>
-              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>All the remaining warnings were "subfields incorrect" issues — the strict reading of the rule is "only the bits where point subfields are incorrect", so they belonged in the errors table with their peers.</span></button>
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Ignore them &mdash; errors from other submissions aren&rsquo;t my responsibility.</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Work top-down: read each error row, apply the suggested fix in the Library, or push back on the submitter. Target zero errors before the handover.</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Delete the flagged rows so the handover is clean.</span></button>
+              <button class="quiz-option" data-value="d" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Export the library anyway &mdash; the client can sort it out their end.</span></button>
             </div>
             <div class="quiz-feedback"></div>
-            <div style="display:none" data-expl-correct>The change was about honesty in the UI — if something is a real problem that needs fixing, it should look like one. Mixing error severities diluted the signal.</div>
-            <div style="display:none" data-expl-wrong="a">Feel isn't the driver. The specific words in the written feedback were the driver.</div>
-            <div style="display:none" data-expl-wrong="b">Not a thing — warnings are a concept inside the tool, nothing to do with browsers.</div>
+            <div style="display:none" data-expl-correct>Every Validation entry is an error for a reason &mdash; something the tool can&rsquo;t resolve without you. Before any handover, the Errors table should be empty. Fix or push back on each row.</div>
+            <div style="display:none" data-expl-wrong="a">The handover is the whole project&rsquo;s, not just your submissions. Zero errors is a delivery standard for the team.</div>
+            <div style="display:none" data-expl-wrong="c">Deleting valid-but-misnamed points loses real data. Fix the name; keep the point.</div>
+            <div style="display:none" data-expl-wrong="d">Client-end cleanup is exactly what the shared vocabulary is supposed to avoid. Clean it before export.</div>
           </div>
 
           <div class="quiz-actions">
@@ -1728,23 +1744,23 @@ pre,code{white-space:pre-wrap;word-break:break-word;overflow-x:hidden}
         <div class="pattern-cards animate-in">
           <div class="pattern-card" style="border-top-color:var(--color-actor-5)">
             <div class="pattern-icon" style="background:var(--color-actor-5)">📇</div>
-            <h4 class="pattern-title">Standalone Catalogue [D3]</h4>
-            <p class="pattern-desc">A new section in the nav. 139 subtype records, searchable, filterable by asset.</p>
+            <h4 class="pattern-title">Standalone Catalogue</h4>
+            <p class="pattern-desc">A dedicated section in the nav. 139 subtype records, searchable, filterable by asset.</p>
           </div>
           <div class="pattern-card" style="border-top-color:var(--color-actor-4)">
             <div class="pattern-icon" style="background:var(--color-actor-4)">🏷️</div>
-            <h4 class="pattern-title">Metadata [D2]</h4>
-            <p class="pattern-desc">Per-subtype manufacturer, model and notes. Editable by MSI, saved to the browser.</p>
+            <h4 class="pattern-title">Metadata</h4>
+            <p class="pattern-desc">Per-subtype manufacturer, model and notes. Editable by admins, saved to the browser.</p>
           </div>
           <div class="pattern-card" style="border-top-color:var(--color-actor-2)">
             <div class="pattern-icon" style="background:var(--color-actor-2)">🎯</div>
-            <h4 class="pattern-title">Suggested mappings [D4]</h4>
+            <h4 class="pattern-title">Suggested mappings</h4>
             <p class="pattern-desc">For each subtype: required, optional, and observed points. A starting point for a formal, expert-reviewed mapping exercise.</p>
           </div>
           <div class="pattern-card" style="border-top-color:var(--color-actor-1)">
             <div class="pattern-icon" style="background:var(--color-actor-1)">🔐</div>
-            <h4 class="pattern-title">MSI Sign-In [D6]</h4>
-            <p class="pattern-desc">Browser-local user accounts replace the old raw admin toggle. Not SSO yet — but meaningful step up.</p>
+            <h4 class="pattern-title">MSI Sign-In</h4>
+            <p class="pattern-desc">Browser-local user accounts replace the old raw admin toggle. Not SSO yet &mdash; but a meaningful step up.</p>
           </div>
         </div>
       </section>
@@ -1839,7 +1855,7 @@ pre,code{white-space:pre-wrap;word-break:break-word;overflow-x:hidden}
           <div class="callout-icon">🗺️</div>
           <div class="callout-content">
             <strong class="callout-title">On the roadmap</strong>
-            <p>A proper shared back-end (so manufacturer data flows between laptops) is open as <strong>[D2]</strong> in the backlog. Until then, one interim workaround is exporting metadata as JSON and letting another MSI engineer import it. That's not built yet — flag it to Rajesh if you need it before the back-end lands.</p>
+            <p>A proper shared back-end (so manufacturer data flows between laptops) is on the roadmap. Until then, an interim workaround is exporting metadata as JSON and letting another admin import it. Flag the need to the tool maintainer if you run into it before the back-end lands.</p>
           </div>
         </div>
       </section>
@@ -1867,29 +1883,41 @@ pre,code{white-space:pre-wrap;word-break:break-word;overflow-x:hidden}
           </div>
 
           <div class="quiz-question-block" data-correct="c">
-            <h3 class="quiz-question">You save manufacturer "Systemair" against a subtype. A colleague opens the same file on their laptop. What do they see?</h3>
+            <div class="scenario-context">
+              <span class="scenario-label">Scenario</span>
+              <p>You sign in as admin, open the Catalogue, and save <strong>Systemair</strong> as the manufacturer against the <code>AHU TYPE-1</code> subtype. A colleague on the other side of the office then opens the same file from the shared drive and looks at the same subtype.</p>
+            </div>
+            <h3 class="quiz-question">What will they see, and what should you do about it?</h3>
             <div class="quiz-options">
-              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>"Systemair" against the subtype.</span></button>
-              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>A prompt asking them to approve your change.</span></button>
-              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>A blank manufacturer field — metadata is browser-local and doesn't travel with the file.</span></button>
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>"Systemair" &mdash; the metadata travels with the file.</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>A prompt to approve my change &mdash; the tool syncs across users.</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>A blank manufacturer field &mdash; catalogue metadata is saved only in the browser that entered it. For team-wide data, export to JSON and share the file, or wait for the shared back-end.</span></button>
+              <button class="quiz-option" data-value="d" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>"Systemair" if they sign in with the same MSI account.</span></button>
             </div>
             <div class="quiz-feedback"></div>
-            <div style="display:none" data-expl-correct>Until a shared backend lands, the file is the app but the data lives in each browser's localStorage. This is the big limitation of the current catalogue approach.</div>
-            <div style="display:none" data-expl-wrong="a">The metadata isn't in the HTML file — it's in your browser's localStorage for that file's origin.</div>
-            <div style="display:none" data-expl-wrong="b">There's no network in this tool. Nothing to approve against.</div>
+            <div style="display:none" data-expl-correct>Catalogue metadata (manufacturer, model, notes) is per-browser. Until a shared back-end arrives, treat it as a personal working copy &mdash; useful for your own reference, not a source of truth for the team. If you want to share, export JSON and send it.</div>
+            <div style="display:none" data-expl-wrong="a">The HTML file ships with the catalogue structure, not with the metadata anyone has entered locally.</div>
+            <div style="display:none" data-expl-wrong="b">There&rsquo;s no network in this tool. Nothing to approve against.</div>
+            <div style="display:none" data-expl-wrong="d">MSI sign-in is also per-browser &mdash; it gates admin actions locally, it doesn&rsquo;t sync data between people.</div>
           </div>
 
           <div class="quiz-question-block" data-correct="b">
-            <h3 class="quiz-question">Why is the Catalogue a <em>standalone</em> section rather than a panel inside By Equipment?</h3>
+            <div class="scenario-context">
+              <span class="scenario-label">Scenario</span>
+              <p>A commissioning engineer is about to walk onto site to check an FCU. They want to know, ahead of time: manufacturer, model (if captured), and which points this subtype <em>should</em> carry &mdash; required, optional, and any unusual extras seen on past projects.</p>
+            </div>
+            <h3 class="quiz-question">Which section do they open, and what do they do?</h3>
             <div class="quiz-options">
-              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Because the Equipment section was being removed.</span></button>
-              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Catalogue and Equipment are different mental models — one's about the subtype "spec card" and manufacturer metadata, the other's about actual points on projects. Different jobs, different space.</span></button>
-              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>It makes the file smaller.</span></button>
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>By Equipment &rarr; click the FCU card &rarr; read the combined point list under the pill bar.</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Subtype Catalogue &rarr; filter to FCU &rarr; click the specific subtype &rarr; read manufacturer / model / the three-column Required / Optional / Observed-extras view.</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Point Library &rarr; filter by asset = FCU &rarr; scroll the full library table.</span></button>
+              <button class="quiz-option" data-value="d" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Name Builder &rarr; type "fcu" in the free-text box to see suggestions.</span></button>
             </div>
             <div class="quiz-feedback"></div>
-            <div style="display:none" data-expl-correct>The Open In Equipment button is the bridge between them — deliberate handoff rather than merged view. Each section stays focused on one job.</div>
-            <div style="display:none" data-expl-wrong="a">Equipment is very much still there. The Catalogue <em>complements</em> it.</div>
-            <div style="display:none" data-expl-wrong="c">Adding a section made the file bigger, not smaller.</div>
+            <div style="display:none" data-expl-correct>The Catalogue is the subtype spec card. Required / Optional / Observed-extras is the mapping view you want &mdash; it tells you what the unit should carry vs what&rsquo;s been seen. By Equipment gives you actual project data; Catalogue gives you the spec-level context.</div>
+            <div style="display:none" data-expl-wrong="a">Equipment is great for actual project points, but won&rsquo;t show manufacturer / model or the required-vs-optional split by subtype.</div>
+            <div style="display:none" data-expl-wrong="c">The Library is flat across all FCU subtypes &mdash; you&rsquo;d lose the per-subtype structure that&rsquo;s most useful on site.</div>
+            <div style="display:none" data-expl-wrong="d">The Builder is for assembling new names, not for looking up existing equipment info.</div>
           </div>
 
           <div class="quiz-actions">
@@ -2024,25 +2052,27 @@ pre,code{white-space:pre-wrap;word-break:break-word;overflow-x:hidden}
 
           <div class="quiz-question-block" data-correct="b">
             <div class="scenario-context">
-              <span class="scenario-label">Scenario · Design engineer</span>
-              <p>A design engineer on 334 Oxford Street wants to add a new point for "zone CO2 concentration". They're not MSI. They know the rough name but not the exact DBO subfields.</p>
+              <span class="scenario-label">Scenario &middot; Design engineer</span>
+              <p>A design engineer on a new project wants to add a point for &ldquo;zone CO&#8322; concentration&rdquo;. They&rsquo;re not signed in as MSI admin. They know the rough name but not the exact DBO subfields.</p>
             </div>
-            <h3 class="quiz-question">What's the right workflow?</h3>
+            <h3 class="quiz-question">What&rsquo;s the right workflow?</h3>
             <div class="quiz-options">
-              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Email John and wait.</span></button>
-              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Open the Name Builder → assemble a candidate name with live validation → when it passes, go to Submit, paste the name, add description, submit. MSI reviews in the Review queue.</span></button>
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Email the MSI lead and wait.</span></button>
+              <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Open the Name Builder &rarr; assemble a candidate name with live validation &rarr; when it passes green, go to Submit Points, paste the name, add a description, submit. An MSI admin reviews in the Review queue.</span></button>
               <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Click Add Point directly in the Library.</span></button>
+              <button class="quiz-option" data-value="d" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Type the name directly into their project schedule and hope it&rsquo;s right.</span></button>
             </div>
             <div class="quiz-feedback"></div>
-            <div style="display:none" data-expl-correct>This is the [U1] flow in full. The Builder teaches them the right vocabulary; live validation catches mistakes; the Submit queue routes the proposal to MSI without them having to know who to email.</div>
-            <div style="display:none" data-expl-wrong="a">Email works but bypasses the workflow the tool is designed to make frictionless.</div>
-            <div style="display:none" data-expl-wrong="c">Add Point is admin-gated — <code>ensureAdmin</code> will block a non-MSI user. The Submit queue is the intended path for them.</div>
+            <div style="display:none" data-expl-correct>This is the submission flow the tool is built for. The Builder teaches the right vocabulary; live validation catches mistakes while they type; the Submit queue routes the proposal to MSI without them having to know who to email.</div>
+            <div style="display:none" data-expl-wrong="a">Email works but bypasses the workflow the tool is designed to make frictionless &mdash; and nothing gets validated.</div>
+            <div style="display:none" data-expl-wrong="c">Add Point is admin-only &mdash; the button simply isn&rsquo;t visible when signed out. The Submit queue is the intended path for non-admins.</div>
+            <div style="display:none" data-expl-wrong="d">The whole point of the tool is to avoid ad-hoc names entering project schedules untested. Always validate via the Builder first.</div>
           </div>
 
           <div class="quiz-question-block" data-correct="c">
             <div class="scenario-context">
-              <span class="scenario-label">Scenario · Tender</span>
-              <p>John is quoting a job with 3 AHUs and 12 FCUs. He opens the Tender Calculator in Typical mode.</p>
+              <span class="scenario-label">Scenario &middot; Tender</span>
+              <p>You&rsquo;re quoting a new job with 3 AHUs and 12 FCUs. You open the Tender Calculator in Typical mode.</p>
             </div>
             <h3 class="quiz-question">What does "Typical" mean, and why is it the default (not Max)?</h3>
             <div class="quiz-options">
@@ -2075,19 +2105,21 @@ pre,code{white-space:pre-wrap;word-break:break-word;overflow-x:hidden}
 
           <div class="quiz-question-block" data-correct="c">
             <div class="scenario-context">
-              <span class="scenario-label">Scenario · Governance</span>
-              <p>A non-MSI colleague asks you why they can't edit manufacturer metadata in the Catalogue on their laptop, even though they can see it.</p>
+              <span class="scenario-label">Scenario &middot; Governance</span>
+              <p>A non-admin colleague on your team asks you why they can&rsquo;t edit manufacturer metadata in the Catalogue, even though they can see it.</p>
             </div>
-            <h3 class="quiz-question">What's happening, and what do you tell them?</h3>
+            <h3 class="quiz-question">What&rsquo;s happening, and what do you tell them?</h3>
             <div class="quiz-options">
-              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>It's a bug — they should be able to.</span></button>
+              <button class="quiz-option" data-value="a" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>It&rsquo;s a bug &mdash; they should be able to.</span></button>
               <button class="quiz-option" data-value="b" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>They need to clear their browser cache first.</span></button>
-              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>Edit Metadata is gated by <code>ensureAdmin</code> — it only appears when signed in as MSI. Catalogue editing is an MSI responsibility so the data stays consistent. If they need a change, they raise it with MSI.</span></button>
+              <button class="quiz-option" data-value="c" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>The <strong>Edit Metadata</strong> button only shows up when signed in as MSI admin. Editing the Catalogue is an admin responsibility so the data stays consistent. If they need a change, they raise it with an admin.</span></button>
+              <button class="quiz-option" data-value="d" onclick="selectOption(this)"><div class="quiz-option-radio"></div><span>They&rsquo;re on the wrong section &mdash; Catalogue is for viewing only, editing happens in By Equipment.</span></button>
             </div>
             <div class="quiz-feedback"></div>
-            <div style="display:none" data-expl-correct>The governance principle: editing the Library (including Catalogue metadata) is admin-only. Non-admin users go via the Submit queue for anything they want added or changed.</div>
-            <div style="display:none" data-expl-wrong="a">It's deliberate. The button only renders when <code>isAdmin()</code> is true.</div>
-            <div style="display:none" data-expl-wrong="b">Cache doesn't come into it — this is a code-level permission check, not a caching issue.</div>
+            <div style="display:none" data-expl-correct>The governance principle: editing the Library (including Catalogue metadata) is admin-only. Non-admin users go via the Submit queue for anything they want added or changed &mdash; same as they would for a new point name.</div>
+            <div style="display:none" data-expl-wrong="a">It&rsquo;s deliberate. Admin-only edit buttons are hidden when signed out &mdash; no "you can&rsquo;t do this" dead-ends.</div>
+            <div style="display:none" data-expl-wrong="b">Cache doesn&rsquo;t come into it &mdash; this is about sign-in state, not caching.</div>
+            <div style="display:none" data-expl-wrong="d">Catalogue editing is the intended place for manufacturer/model metadata &mdash; just gated behind admin sign-in.</div>
           </div>
 
           <div class="quiz-actions">

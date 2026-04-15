@@ -301,8 +301,11 @@ html[data-fsz="lg"] body{zoom:1.15}
 @keyframes tourDotPulse{0%{transform:scale(.55);opacity:.7}100%{transform:scale(3.6);opacity:0}}
 
 /* Target highlight ring — bold border + dim page backdrop via massive box-shadow cutout.
-   The big outer shadow dims everything OUTSIDE the ring, forcing the eye to the target. */
-.tour-ring{position:fixed;z-index:99997;border:3px solid var(--ac);border-radius:8px;box-shadow:0 0 0 9999px rgba(15,17,22,.42),0 0 24px 0 rgba(42,123,155,.55);pointer-events:none;transition:top 260ms cubic-bezier(.16,1,.3,1),left 260ms cubic-bezier(.16,1,.3,1),width 260ms cubic-bezier(.16,1,.3,1),height 260ms cubic-bezier(.16,1,.3,1);opacity:0;background:transparent}
+   The dim colour is theme-aware: on light backgrounds a dark dim darkens; on dark backgrounds
+   we push even darker so the ring stands out against the already-dark page. */
+:root{--tour-dim:rgba(15,17,22,.42);--tour-glow:rgba(42,123,155,.55)}
+[data-theme="dark"]{--tour-dim:rgba(0,0,0,.72);--tour-glow:rgba(88,166,200,.85)}
+.tour-ring{position:fixed;z-index:99997;border:3px solid var(--ac);border-radius:8px;box-shadow:0 0 0 9999px var(--tour-dim),0 0 24px 0 var(--tour-glow);pointer-events:none;transition:top 260ms cubic-bezier(.16,1,.3,1),left 260ms cubic-bezier(.16,1,.3,1),width 260ms cubic-bezier(.16,1,.3,1),height 260ms cubic-bezier(.16,1,.3,1);opacity:0;background:transparent}
 .tour-ring.show{opacity:1}
 /* Pointer arrow on popover, pointing toward the dot (orientation set via data attribute) */
 .tour-popover::before{content:'';position:absolute;width:0;height:0;border:10px solid transparent}
