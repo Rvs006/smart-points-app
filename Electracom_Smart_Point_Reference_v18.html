@@ -300,9 +300,10 @@ html[data-fsz="lg"] body{zoom:1.15}
 .tour-dot::after{animation-delay:.9s}
 @keyframes tourDotPulse{0%{transform:scale(.55);opacity:.7}100%{transform:scale(3.6);opacity:0}}
 
-/* Target highlight ring — subtle border around the element the dot points at */
-.tour-ring{position:fixed;z-index:99997;border:2px solid var(--ac);border-radius:10px;box-shadow:0 0 0 3px rgba(42,123,155,.22),0 0 0 4px rgba(42,123,155,.14) inset,0 0 20px rgba(42,123,155,.35);pointer-events:none;transition:top 320ms cubic-bezier(.16,1,.3,1),left 320ms cubic-bezier(.16,1,.3,1),width 320ms cubic-bezier(.16,1,.3,1),height 320ms cubic-bezier(.16,1,.3,1);opacity:0;background:transparent;animation:tourRingPulse 2s ease-in-out infinite}
-@keyframes tourRingPulse{0%,100%{box-shadow:0 0 0 3px rgba(42,123,155,.22),0 0 0 4px rgba(42,123,155,.14) inset,0 0 20px rgba(42,123,155,.35)}50%{box-shadow:0 0 0 6px rgba(42,123,155,.30),0 0 0 4px rgba(42,123,155,.14) inset,0 0 32px rgba(42,123,155,.50)}}
+/* Target highlight ring — subtle border + dim page backdrop via massive box-shadow cutout.
+   The big outer shadow dims everything OUTSIDE the ring, forcing the eye to the target. */
+.tour-ring{position:fixed;z-index:99997;border:2px solid var(--ac);border-radius:10px;box-shadow:0 0 0 3px rgba(42,123,155,.35),0 0 0 4px rgba(42,123,155,.14) inset,0 0 0 9999px rgba(20,22,28,.28);pointer-events:none;transition:top 280ms cubic-bezier(.16,1,.3,1),left 280ms cubic-bezier(.16,1,.3,1),width 280ms cubic-bezier(.16,1,.3,1),height 280ms cubic-bezier(.16,1,.3,1);opacity:0;background:transparent}
+.tour-ring.show{opacity:1}
 .tour-ring.show{opacity:1}
 
 /* Popover */
@@ -2515,7 +2516,7 @@ if(dboSyncDue()){setTimeout(function(){syncDBO(true)},800)}
    { sec:'library', sel:'[data-tour="library-system-tabs"]', scroll:true, title:'Scan the whole library', body:'Cycle through the system tabs \u2014 BMS / MEP, EMS, PMS, Fire, Access, Lifts, Lighting, CCTV. Each holds its own slice. A fast way to gauge coverage before pitching.' },
    { sec:'projects', sel:'[data-tour="project-cards"]', scroll:true, title:'Compare projects side-by-side', body:'One card per project, with its point count and DBO compliance percentage at a glance. Click any card to see its full list \u2014 useful for "what did we capture there that we don\'t have here?" conversations.' },
    { sec:'scope', sel:'[data-tour="tender-toolbar"]', scroll:true, title:'Size a tender', body:'Enter equipment quantities below. The <strong>Typical / Max</strong> pill in this toolbar toggles between a realistic single-install count and the worst-case union \u2014 each row shows both numbers so the output is never ambiguous.' },
-   { sec:'library', sel:'button[onclick="exportXL()"]', scroll:true, title:'Export a client handover', body:'Apply any filter, then click <strong>Excel</strong> here \u2014 you\'ll get a multi-sheet workbook with the filtered points on one sheet and a DBO reference sheet built in. Filtered exports include <code>_filtered</code> in the filename so the scope is never ambiguous.' }
+   { sec:'library', sel:'button[onclick="exportExcel()"]', scroll:true, title:'Export a client handover', body:'Apply any filter, then click <strong>Excel</strong> here \u2014 you\'ll get a multi-sheet workbook with the filtered points on one sheet and a DBO reference sheet built in. Filtered exports include <code>_filtered</code> in the filename so the scope is never ambiguous.' }
   ]},
   commissioning: { label: 'Commissioning Engineer', icon: '\ud83d\udd27', lead: 'Find, narrow, verify, export.', steps: [
    { sec:'equipment', sel:'.eq-card', scroll:true, title:'Open the equipment', body:'Click any asset card (AHU, FCU, VAV, etc.) to open its detail panel. The panel shows every point associated with that equipment across all projects, plus a coverage summary against the standard baseline.' },
@@ -2730,22 +2731,29 @@ if(dboSyncDue()){setTimeout(function(){syncDBO(true)},800)}
    dot.style.top  = dotTop + 'px';
    dot.classList.add('show');
 
-   // Popover: prefer below, then above, then right, then left, then anchored to bottom
+   // Popover: anchor to the DOT (not the target rect) so they always feel connected.
+   // The dot sits at the target's top-right; position popover next to the dot, preferring
+   // right → below → above → left → corner.
    var ph = pop.offsetHeight || 230;
    var margin = 16;
    var left, top;
-   if (r.bottom + 14 + ph < vh - margin){
-    top = r.bottom + 14;
-    left = Math.min(Math.max(margin, r.left), vw - pw - margin);
-   } else if (r.top - 14 - ph > 70){
-    top = r.top - 14 - ph;
-    left = Math.min(Math.max(margin, r.left), vw - pw - margin);
-   } else if (r.right + 20 + pw < vw - margin){
-    left = r.right + 20;
-    top  = Math.min(Math.max(70, r.top), vh - ph - margin);
-   } else if (r.left - 20 - pw > margin){
-    left = r.left - 20 - pw;
-    top  = Math.min(Math.max(70, r.top), vh - ph - margin);
+   if (dotLeft + 18 + pw < vw - margin){
+    // Right of dot, slightly above dot for visual balance
+    left = dotLeft + 18;
+    top  = Math.max(70, Math.min(dotTop - 24, vh - ph - margin));
+   } else if (dotTop + 22 + ph < vh - margin){
+    // Below dot, horizontally aligned so dot sits above the popover
+    // (right-align popover's right edge with the dot + margin)
+    left = Math.min(Math.max(margin, dotLeft - pw + 40), vw - pw - margin);
+    top  = dotTop + 22;
+   } else if (dotTop - 18 - ph > 70){
+    // Above dot
+    left = Math.min(Math.max(margin, dotLeft - pw + 40), vw - pw - margin);
+    top  = dotTop - 18 - ph;
+   } else if (dotLeft - 18 - pw > margin){
+    // Left of dot
+    left = dotLeft - 18 - pw;
+    top  = Math.max(70, Math.min(dotTop - 24, vh - ph - margin));
    } else {
     left = vw - pw - margin;
     top  = vh - ph - margin;
@@ -2767,7 +2775,11 @@ if(dboSyncDue()){setTimeout(function(){syncDBO(true)},800)}
  function nextTour(){
   if (!state.running) return;
   var steps = TOUR[state.role].steps;
-  if (state.step >= steps.length - 1) return exitTour();
+  // Natural finish (last step → Finish): close tour AND land on home
+  if (state.step >= steps.length - 1){
+   finishTour();
+   return;
+  }
   showStep(state.step + 1);
  }
  function prevTour(){
@@ -2775,10 +2787,21 @@ if(dboSyncDue()){setTimeout(function(){syncDBO(true)},800)}
   showStep(state.step - 1);
  }
  function exitTour(){
+  // User-initiated exit (Esc, × button, Skip) — stay where they are, just tear down the tour.
   state.running = false;
   var root = $('tour-root');
   if (root) root.innerHTML = '';
   document.removeEventListener('keydown', onKey);
+ }
+ function finishTour(){
+  // Natural completion (clicked Finish on the last step) — tear down AND go home.
+  state.running = false;
+  var root = $('tour-root');
+  if (root) root.innerHTML = '';
+  document.removeEventListener('keydown', onKey);
+  if (typeof goHome === 'function'){
+   setTimeout(function(){ goHome(); }, 120);
+  }
  }
  function onKey(e){
   if (!state.running) return;
@@ -2805,6 +2828,7 @@ if(dboSyncDue()){setTimeout(function(){syncDBO(true)},800)}
  window.nextTour = nextTour;
  window.prevTour = prevTour;
  window.exitTour = exitTour;
+ window.finishTour = finishTour;
 
  // ==== AUTO-LAUNCH: when user enters the app for the first time after demo ====
  (function autoLaunch(){
