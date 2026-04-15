@@ -205,11 +205,15 @@ html[data-fsz="lg"] body{zoom:1.15}
 .sync-summary-card .ssc-more{font-size:10px;color:var(--mu);font-style:italic;padding:2px 0}
 .sync-summary-card .ssc-foot{font-size:10px;color:var(--mu);padding-top:8px;border-top:1px solid var(--bd);margin-top:6px}
 /* Sync status pill in nav */
-.sync-pill{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:980px;font-size:10px;font-weight:600;background:var(--sf2);border:1px solid var(--bd);color:var(--mu);cursor:pointer;font-family:inherit}
+.sync-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border-radius:980px;font-size:10px;font-weight:600;background:var(--sf2);border:1px solid var(--bd);color:var(--mu);cursor:pointer;font-family:inherit}
 .sync-pill.fresh{color:var(--gnt);border-color:var(--gn)}
 .sync-pill.stale{color:var(--amt);border-color:var(--am)}
 .sync-pill:hover{background:var(--trh)}
 .sync-pill .sdot{width:6px;height:6px;border-radius:50%;background:currentColor}
+/* [DBO logo] Small inline SVG mark identifying the sync pill as the DBO / Google
+   Digital Buildings Ontology indicator. Uses currentColor so it adopts fresh/stale hue. */
+.sync-pill .dbo-logo{width:16px;height:16px;flex-shrink:0;opacity:.9}
+.sync-pill.spin .dbo-logo{animation:sp 1s linear infinite}
 .catalog-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
 .catalog-grid{display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);gap:14px}
 .catalog-list{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);box-shadow:var(--shs);overflow:hidden}
@@ -330,6 +334,12 @@ html[data-fsz="lg"] body{zoom:1.15}
 [data-theme="dark"]{--tour-dim:rgba(0,0,0,.72);--tour-glow:rgba(88,166,200,.85)}
 .tour-ring{position:fixed;z-index:99997;border:3px solid var(--ac);border-radius:8px;box-shadow:0 0 0 9999px var(--tour-dim),0 0 24px 0 var(--tour-glow);pointer-events:none;transition:top 260ms cubic-bezier(.16,1,.3,1),left 260ms cubic-bezier(.16,1,.3,1),width 260ms cubic-bezier(.16,1,.3,1),height 260ms cubic-bezier(.16,1,.3,1);opacity:0;background:transparent}
 .tour-ring.show{opacity:1}
+/* [Tour click-freeze] Full-page transparent overlay during tour. Catches accidental
+   clicks on the underlying page so only the tour popover controls are interactive. */
+.tour-clickblock{position:fixed;inset:0;z-index:99996;background:transparent;cursor:not-allowed;display:none}
+.tour-clickblock.show{display:block}
+.tour-nudge{position:fixed;z-index:100000;background:var(--ac);color:#fff;padding:8px 14px;border-radius:980px;font-size:11px;font-weight:600;box-shadow:0 4px 16px rgba(42,123,155,.4);pointer-events:none;opacity:0;transition:opacity 200ms;font-family:inherit;white-space:nowrap}
+.tour-nudge.show{opacity:1}
 /* Pointer arrow on popover, pointing toward the dot (orientation set via data attribute) */
 .tour-popover::before{content:'';position:absolute;width:0;height:0;border:10px solid transparent}
 .tour-popover[data-arrow="left"]::before{left:-10px;top:20px;border-right-color:var(--sf);border-left:0;filter:drop-shadow(-1px 0 0 var(--bd))}
@@ -624,6 +634,8 @@ html[data-fsz="lg"] body{zoom:1.15}
      <option value="designer">BMS Designer</option>
      <option value="solutions">Solutions Engineer</option>
      <option value="commissioning">Commissioning Engineer</option>
+     <option value="developer">Software Developer</option>
+     <option value="architect">Solutions Architect</option>
      <option value="admin">Administrator</option>
     </select>
     <button class="dc-launch" onclick="launchFromDemo(dcSelectedRole())"><span class="dc-launch-dot"></span>Launch with this tour &rarr;</button>
@@ -686,6 +698,34 @@ html[data-fsz="lg"] body{zoom:1.15}
       <div class="dc-walk-step"><div class="dc-walk-head"><div class="dc-walk-num">5</div><div class="dc-walk-title">Keep vocabulary fresh</div></div><div class="dc-walk-body"><div class="dc-walk-row"><span class="dc-walk-lab">Go to</span><span>The sync pill in the nav.</span></div><div class="dc-walk-row"><span class="dc-walk-lab">Do</span><span>Click to sync now, or toggle weekly auto-sync in the file menu.</span></div><div class="dc-walk-row"><span class="dc-walk-lab">See</span><span>Toast reports the diff: &ldquo;1,499 fields (+3 new)&rdquo;; pill turns green.</span></div></div></div>
      </div>
      <div class="dc-tour-launch"><button class="dc-launch" onclick="launchFromDemo('admin')"><span class="dc-launch-dot"></span>Start this tour &rarr;</button></div>
+    </div>
+
+    <div class="dc-tour-card" data-dcrole="developer">
+     <div class="dc-tour-header">
+      <div class="dc-tour-icon">&#128187;</div>
+      <div><div class="dc-tour-title">For a Software Developer</div><p class="dc-tour-lead">You build platform integrations and pipelines. Flow: consume the canonical names, check the vocabulary, model the connections, validate inbound points.</p></div>
+     </div>
+     <div class="dc-walk">
+      <div class="dc-walk-step"><div class="dc-walk-head"><div class="dc-walk-num">1</div><div class="dc-walk-title">Consume the Library</div></div><div class="dc-walk-body"><div class="dc-walk-row"><span class="dc-walk-lab">Go to</span><span>Point Library.</span></div><div class="dc-walk-row"><span class="dc-walk-lab">Do</span><span>Browse columns: object type, data type, unit, access, MQTT topic preview. Export JSON for round-tripping.</span></div><div class="dc-walk-row"><span class="dc-walk-lab">See</span><span>The canonical data contract your integrations should read and publish against.</span></div></div></div>
+      <div class="dc-walk-step"><div class="dc-walk-head"><div class="dc-walk-num">2</div><div class="dc-walk-title">Check the vocabulary</div></div><div class="dc-walk-body"><div class="dc-walk-row"><span class="dc-walk-lab">Go to</span><span>DBO Lookup.</span></div><div class="dc-walk-row"><span class="dc-walk-lab">Do</span><span>Search fields (full names) and subfields (tokens). Each subfield shows its category.</span></div><div class="dc-walk-row"><span class="dc-walk-lab">See</span><span>The schema your publisher&rsquo;s validator should enforce.</span></div></div></div>
+      <div class="dc-walk-step"><div class="dc-walk-head"><div class="dc-walk-num">3</div><div class="dc-walk-title">Model the connections</div></div><div class="dc-walk-body"><div class="dc-walk-row"><span class="dc-walk-lab">Go to</span><span>Connections.</span></div><div class="dc-walk-row"><span class="dc-walk-lab">Do</span><span>Read connection types, units, spatial hierarchy (site &rarr; building &rarr; floor &rarr; zone).</span></div><div class="dc-walk-row"><span class="dc-walk-lab">See</span><span>The topology your services will publish into.</span></div></div></div>
+      <div class="dc-walk-step"><div class="dc-walk-head"><div class="dc-walk-num">4</div><div class="dc-walk-title">Validate inbound points</div></div><div class="dc-walk-body"><div class="dc-walk-row"><span class="dc-walk-lab">Go to</span><span>Submit Points (or Builder).</span></div><div class="dc-walk-row"><span class="dc-walk-lab">Do</span><span>Paste a name your integration wants to publish. The live validator runs the same rules you should embed.</span></div><div class="dc-walk-row"><span class="dc-walk-lab">See</span><span>Pass / fail output you can use as a test oracle.</span></div></div></div>
+     </div>
+     <div class="dc-tour-launch"><button class="dc-launch" onclick="launchFromDemo('developer')"><span class="dc-launch-dot"></span>Start this tour &rarr;</button></div>
+    </div>
+
+    <div class="dc-tour-card" data-dcrole="architect">
+     <div class="dc-tour-header">
+      <div class="dc-tour-icon">&#127959;&#65039;</div>
+      <div><div class="dc-tour-title">For a Solutions Architect</div><p class="dc-tour-lead">You set integration strategy and standard point sets. Flow: entity baselines, subtype mappings, realistic sizing, spatial model.</p></div>
+     </div>
+     <div class="dc-walk">
+      <div class="dc-walk-step"><div class="dc-walk-head"><div class="dc-walk-num">1</div><div class="dc-walk-title">Entity baselines</div></div><div class="dc-walk-body"><div class="dc-walk-row"><span class="dc-walk-lab">Go to</span><span>Entity Types.</span></div><div class="dc-walk-row"><span class="dc-walk-lab">Do</span><span>Browse each equipment family&rsquo;s required + optional points.</span></div><div class="dc-walk-row"><span class="dc-walk-lab">See</span><span>The ontology-level baseline your designs measure against.</span></div></div></div>
+      <div class="dc-walk-step"><div class="dc-walk-head"><div class="dc-walk-num">2</div><div class="dc-walk-title">Subtype mapping</div></div><div class="dc-walk-body"><div class="dc-walk-row"><span class="dc-walk-lab">Go to</span><span>Subtype Catalogue.</span></div><div class="dc-walk-row"><span class="dc-walk-lab">Do</span><span>Pick a subtype, review Required / Optional / Observed extras.</span></div><div class="dc-walk-row"><span class="dc-walk-lab">See</span><span>The model-specific delta between the ontology baseline and real projects.</span></div></div></div>
+      <div class="dc-walk-step"><div class="dc-walk-head"><div class="dc-walk-num">3</div><div class="dc-walk-title">Sizing by quantity</div></div><div class="dc-walk-body"><div class="dc-walk-row"><span class="dc-walk-lab">Go to</span><span>Tender Calculator.</span></div><div class="dc-walk-row"><span class="dc-walk-lab">Do</span><span>Enter equipment quantities. Toggle Typical / Max.</span></div><div class="dc-walk-row"><span class="dc-walk-lab">See</span><span>Realistic install count vs worst-case envelope for strategy conversations.</span></div></div></div>
+      <div class="dc-walk-step"><div class="dc-walk-head"><div class="dc-walk-num">4</div><div class="dc-walk-title">Spatial model</div></div><div class="dc-walk-body"><div class="dc-walk-row"><span class="dc-walk-lab">Go to</span><span>Connections.</span></div><div class="dc-walk-row"><span class="dc-walk-lab">Do</span><span>Review connection types + spatial hierarchy.</span></div><div class="dc-walk-row"><span class="dc-walk-lab">See</span><span>The shape of the model your platform will compose.</span></div></div></div>
+     </div>
+     <div class="dc-tour-launch"><button class="dc-launch" onclick="launchFromDemo('architect')"><span class="dc-launch-dot"></span>Start this tour &rarr;</button></div>
     </div>
 
    </div>
@@ -1822,10 +1862,24 @@ function renderNav(){
   var _m=getDboSyncMeta();
   var _ago=dboSyncAgo();
   var _stale=_m.lastSync?(Date.now()-new Date(_m.lastSync).getTime())>14*86400000:true;
-  h+='<button id="sb" class="sync-pill '+(_stale?'stale':'fresh')+'" onclick="syncDBO()" title="Click to sync DBO fields from GitHub now. Last synced: '+_ago+'"><span class="sdot"></span>DBO '+_m.fieldCount+' \u00b7 '+_ago+'</button>';
+  // [DBO logo] Small SVG mark — a stylised building + DBO brand wordmark — next to the
+  // sync pill so the "DBO" label reads as a Google Digital Buildings indicator, not just
+  // three letters of mystery text.
+  h+='<button id="sb" class="sync-pill '+(_stale?'stale':'fresh')+'" onclick="syncDBO()" title="Click to sync DBO fields from GitHub now. Last synced: '+_ago+'">';
+  h+='<svg class="dbo-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Google Digital Buildings Ontology">';
+  h+=  '<path d="M3 21h18" />';                                   // ground
+  h+=  '<path d="M5 21V10l4-3 4 3v11" />';                        // left building
+  h+=  '<path d="M13 21V13l4-2 4 2v8" />';                        // right building
+  h+=  '<circle cx="9" cy="13" r="1" fill="currentColor"/>';    // window dot 1
+  h+=  '<circle cx="9" cy="17" r="1" fill="currentColor"/>';    // window dot 2
+  h+=  '<circle cx="17" cy="16" r="1" fill="currentColor"/>';   // window dot 3
+  h+='</svg>';
+  h+='<span class="sdot"></span>DBO '+_m.fieldCount+' \u00b7 '+_ago+'</button>';
  }
  h+='<button class="nb" onclick="showDemo()" title="Return to the product brief / intro screen"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> Brief</button>';
- h+='<button class="tour-trigger" onclick="openTourPicker(false)" title="Start a guided tour of the app by role"><span class="tour-trigger-dot" aria-hidden="true"></span>Guided Tour</button>';
+ // [Tour] "Guided Tour" button — if the user has a role, start their tour directly;
+ // otherwise open the role picker. Pick a different role any time via Change Role on home.
+ h+='<button class="tour-trigger" onclick="launchTourForCurrentUser()" title="Start the guided tour for your role"><span class="tour-trigger-dot" aria-hidden="true"></span>Guided Tour</button>';
  h+='<span class="auth-state">'+authName()+'</span>';
  h+='<button class="nb" onclick="toggleAdmin()" title="'+(adm?'Sign out MSI admin':'Sign in for MSI admin controls')+'">'+(adm?'Sign Out':'MSI Sign In')+'</button>';
  // [FocusMode] Toggle — visible only when a role is picked
@@ -2640,8 +2694,36 @@ render();
    { sec:'catalog', sel:'[data-tour="catalog-toolbar"]', scroll:true, title:'Curate catalogue metadata', body:'Pick any subtype in the list, click <strong>Edit Metadata</strong> on its detail, and capture manufacturer, model, and notes. Changes persist in this browser across reloads.' },
    { sec:'validation', sel:'[data-tour="validation-stats"]', scroll:true, title:'Audit the library', body:'The Errors / Clean / Checked summary gives you a delivery-ready audit. Below it, a single errors table covers every custom-added point that breaks a rule \u2014 structural, vocabulary, or semantic. Work it top-down before a delivery.' },
    { sec:'library', sel:'#sb', scroll:false, title:'Keep the vocabulary fresh', body:'The <strong>DBO sync pill</strong> in the nav shows freshness at a glance. Click to sync now. Toggle weekly auto-sync from the File menu so the check runs without you thinking about it.' }
+  ]},
+  developer: { label: 'Software Developer', icon: '\ud83d\udcbb', lead: 'Library, vocabulary, connections, MQTT.', steps: [
+   { sec:'library', sel:'[data-tour="library-search"]', scroll:true, title:'Canonical point list', body:'The Point Library is the data contract your integrations consume. Each row has a canonical DBO name, object type, data type, unit, access, and an MQTT topic preview. Filter by system or compliance and export as JSON for round-tripping.' },
+   { sec:'lookup', sel:'.rp', scroll:true, title:'Field &amp; subfield vocabulary', body:'DBO Lookup is the subfield index you can treat as a schema definition. The left pane is every approved full field name; the right is every subfield with its category. Use this when building validators or publishers that need to verify tokens.' },
+   { sec:'connections', sel:'.main', scroll:true, title:'Connections, units &amp; hierarchy', body:'Connection types (feeds, contains, hasPart), standard units (celsius, pascal, percent), and the spatial hierarchy (site \u2192 building \u2192 floor \u2192 zone). The data model your services will publish into.' },
+   { sec:'submit', sel:'#upDbo', scroll:true, title:'Submit proposed points', body:'If your integration surfaces a new kind of point, validate it here first. Live validation is the same ruleset you should embed in your publisher, so what passes the Builder will pass your pipeline.' }
+  ]},
+  architect: { label: 'Solutions Architect', icon: '\ud83c\udfd7\ufe0f', lead: 'Entities, connections, sizing.', steps: [
+   { sec:'entities', sel:'.main', scroll:true, title:'Entity types', body:'Each equipment family (AHU, FCU, CHILLER, VAV&hellip;) has a required + optional point set defined at the ontology level. This is the baseline you design integrations against.' },
+   { sec:'catalog', sel:'[data-tour="catalog-toolbar"]', scroll:true, title:'Subtype mapping', body:'For each subtype, the catalogue shows the required / optional / observed-extras split. Useful when deciding what to include in a model-specific config profile.' },
+   { sec:'scope', sel:'[data-tour="tender-toolbar"]', scroll:true, title:'Sizing by equipment quantity', body:'Typical vs Max mode: Typical is the max distinct points seen on any one project; Max is the union across every project. Use Typical for realistic scope, Max for defensive sizing.' },
+   { sec:'connections', sel:'.main', scroll:true, title:'Building model reference', body:'Connection relations and the spatial hierarchy. This is the shape of the model you\'ll compose in a platform-independent way.' }
   ]}
  };
+
+ // [Role map] Bridge between app-side role IDs and tour-side role IDs.
+ // The app has 5 profiles (des/pm/comm/dev/arch); the tour has matching walkthroughs.
+ var APP_ROLE_TO_TOUR = {
+  des: 'designer',
+  pm: 'solutions',
+  comm: 'commissioning',
+  dev: 'developer',
+  arch: 'architect'
+ };
+ // Admins get the admin-specific tour regardless of which profile they picked.
+ function roleForCurrentUser(){
+  if (typeof S === 'undefined' || !S.role) return null;
+  try { if (typeof isAdmin === 'function' && isAdmin()) return 'admin'; } catch(e){}
+  return APP_ROLE_TO_TOUR[S.role] || null;
+ }
 
  var state = { running:false, role:null, step:0, resizeTimer:null };
 
@@ -2653,8 +2735,11 @@ render();
   if (!root) return null;
   if ($('tour-dot')) return root;
   root.innerHTML =
+   // [Tour click-freeze] Clickblock sits under the ring/popover but above the page
+   '<div class="tour-clickblock" id="tour-clickblock" onclick="tourNudge(event)" aria-hidden="true"></div>' +
    '<div class="tour-ring" id="tour-ring" aria-hidden="true"></div>' +
    '<div class="tour-dot" id="tour-dot" aria-hidden="true"></div>' +
+   '<div class="tour-nudge" id="tour-nudge" aria-hidden="true">Use the popover controls to navigate the tour</div>' +
    '<div class="tour-popover" id="tour-popover" role="dialog" aria-live="polite">' +
     '<div class="tp-head">' +
      '<span class="tp-kicker" id="tp-kicker">Tour</span>' +
@@ -2671,6 +2756,30 @@ render();
     '</div>' +
    '</div>';
   return root;
+ }
+
+ // [Tour click-freeze] When the user accidentally clicks the frozen underlying page,
+ // show a small pill near their cursor reminding them to use tour controls.
+ function tourNudge(e){
+  var nudge = $('tour-nudge');
+  if (!nudge) return;
+  var x = e ? e.clientX : window.innerWidth / 2;
+  var y = e ? e.clientY : window.innerHeight / 2;
+  // Position above the cursor, clamped to viewport
+  var left = Math.min(Math.max(16, x - 120), window.innerWidth - 260);
+  var top  = Math.max(16, y - 44);
+  nudge.style.left = left + 'px';
+  nudge.style.top  = top  + 'px';
+  nudge.classList.add('show');
+  clearTimeout(nudge._t);
+  nudge._t = setTimeout(function(){ nudge.classList.remove('show'); }, 1500);
+  // Also pulse the popover to draw attention to where controls actually are
+  var pop = $('tour-popover');
+  if (pop){
+   pop.style.transition = 'transform 180ms cubic-bezier(.4,0,.2,1)';
+   pop.style.transform = 'scale(1.04)';
+   setTimeout(function(){ if (pop) pop.style.transform = ''; }, 180);
+  }
  }
 
  function openTourPicker(isFirstRun){
@@ -2819,7 +2928,11 @@ render();
   var ring = $('tour-ring');
   var dot = $('tour-dot');
   var pop = $('tour-popover');
+  var block = $('tour-clickblock');
   if (!ring || !dot || !pop) return;
+  // [Tour click-freeze] Show the clickblock whenever the tour is running — it catches
+  // every click that isn't on the popover (which sits on a higher z-index).
+  if (block && state && state.running) block.classList.add('show');
   var vw = window.innerWidth, vh = window.innerHeight;
   var pw = Math.min(340, vw - 32);
   pop.style.width = pw + 'px';
@@ -2972,6 +3085,14 @@ render();
  window.prevTour = prevTour;
  window.exitTour = exitTour;
  window.finishTour = finishTour;
+ window.tourNudge = tourNudge;
+ // [Tour] One-button launcher used by the nav: auto-pick the right tour based on the
+ // user's chosen role, or fall back to the role picker if no role is set.
+ window.launchTourForCurrentUser = function(){
+  var role = roleForCurrentUser();
+  if (role && TOUR[role]){ startTour(role); }
+  else { openTourPicker(false); }
+ };
 
  // ==== AUTO-LAUNCH: when user enters the app for the first time after demo ====
  (function autoLaunch(){
@@ -2982,7 +3103,10 @@ render();
    if (typeof S === 'undefined') return;
    if (S.page === 'app'){
     clearInterval(iv);
-    // Did they pick a role in the demo? Start that tour directly.
+    // Auto-launch priority:
+    //  1. An explicit "launch with this tour" from the demo → pending role
+    //  2. The user's picked app role → auto-map to matching tour role (skip picker)
+    //  3. Nothing seen yet + no role → open role picker
     var pendingRole = null;
     try{ pendingRole = localStorage.getItem('v18_tour_role_pending'); }catch(e){}
     var seen = false;
@@ -2991,7 +3115,12 @@ render();
      try{ localStorage.removeItem('v18_tour_role_pending'); }catch(e){}
      setTimeout(function(){ startTour(pendingRole); }, 450);
     } else if (!seen){
-     setTimeout(function(){ openTourPicker(true); }, 400);
+     var autoRole = roleForCurrentUser();
+     if (autoRole && TOUR[autoRole]){
+      setTimeout(function(){ startTour(autoRole); }, 450);
+     } else {
+      setTimeout(function(){ openTourPicker(true); }, 400);
+     }
     }
    }
   }, 200);
