@@ -181,6 +181,29 @@ html[data-fsz="lg"] body{zoom:1.15}
 .nb-back:hover{opacity:.9}
 /* Font size cycle button */
 .nb-fsz{min-width:36px;font-variant-numeric:tabular-nums;font-weight:700}
+/* [FocusMode] Focus-mode toggle */
+.nb-fm.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.nb-fm.on:hover{filter:brightness(1.1);background:var(--ac)}
+/* [SyncSummary] DBO sync notification card — top-right, dismissible, shows field-name diff */
+.sync-summary-card{position:fixed;top:68px;right:16px;z-index:150;width:360px;max-width:92vw;background:var(--sf);border:1px solid var(--bd);border-left:4px solid var(--ac);border-radius:var(--r);box-shadow:0 12px 40px rgba(0,0,0,.18);font-family:inherit;animation:sscSlide 260ms cubic-bezier(.16,1,.3,1)}
+@keyframes sscSlide{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.sync-summary-card .ssc-head{display:flex;align-items:flex-start;gap:10px;padding:12px 14px 8px}
+.sync-summary-card .ssc-icon{font-size:20px;line-height:1}
+.sync-summary-card .ssc-title-block{flex:1;min-width:0}
+.sync-summary-card .ssc-title{font-size:13px;font-weight:700;color:var(--tx);margin-bottom:2px}
+.sync-summary-card .ssc-sub{font-size:10px;color:var(--mu);line-height:1.4}
+.sync-summary-card .ssc-close{background:transparent;border:none;font-size:18px;line-height:1;color:var(--mu);cursor:pointer;padding:2px 6px;border-radius:4px;font-family:inherit}
+.sync-summary-card .ssc-close:hover{color:var(--tx);background:var(--trh)}
+.sync-summary-card .ssc-body{padding:4px 14px 12px}
+.sync-summary-card .ssc-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px}
+.sync-summary-card .ssc-badge{font-family:var(--fm);font-size:10px;font-weight:700;padding:3px 8px;border-radius:980px;flex-shrink:0;line-height:1.3}
+.sync-summary-card .ssc-badge.add{background:var(--gnbg);color:var(--gnt)}
+.sync-summary-card .ssc-badge.rem{background:var(--rdbg);color:var(--rdt)}
+.sync-summary-card .ssc-list{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
+.sync-summary-card .ssc-field{font-family:var(--fm);font-size:10px;background:var(--sf2);color:var(--tx2);padding:2px 6px;border-radius:4px;word-break:break-all}
+.sync-summary-card .ssc-field.rem{text-decoration:line-through;color:var(--mu2)}
+.sync-summary-card .ssc-more{font-size:10px;color:var(--mu);font-style:italic;padding:2px 0}
+.sync-summary-card .ssc-foot{font-size:10px;color:var(--mu);padding-top:8px;border-top:1px solid var(--bd);margin-top:6px}
 /* Sync status pill in nav */
 .sync-pill{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:980px;font-size:10px;font-weight:600;background:var(--sf2);border:1px solid var(--bd);color:var(--mu);cursor:pointer;font-family:inherit}
 .sync-pill.fresh{color:var(--gnt);border-color:var(--gn)}
@@ -1151,7 +1174,12 @@ var S={page:(function(){
 role:(function(){var r=localStorage.getItem('epl10_role')||localStorage.getItem('epl_role')||'';if(r==='eng')return'des';if(r==='int')return'dev';return r})(),
 guideOpen:{},dedup:false,scopeQty:{},scopeProj:'',scopeCost:'',scopeMode:'typ',editIdx:null,selEnt:null,nsFilter:'all',
 // [v15] Navigation history stack, font size pref, export modal state
-hist:[],fontSz:(localStorage.getItem('epl10_fsz')||'md')};
+hist:[],fontSz:(localStorage.getItem('epl10_fsz')||'md'),focusMode:(localStorage.getItem('epl10_focus_mode')==='1')};
+
+// [FocusMode] Toggle: when ON, the grouped section nav + home cards show only
+// the current role's recommended sections. When OFF (default), everything is visible.
+function toggleFocusMode(){S.focusMode=!S.focusMode;try{localStorage.setItem('epl10_focus_mode',S.focusMode?'1':'0')}catch(e){}render()}
+function isRecSec(id){if(!S.focusMode||!S.role)return true;var r=ROLES.find(function(x){return x.id===S.role});if(!r||!r.secs)return true;if(id===r.def)return true;return r.secs.indexOf(id)>=0}
 
 function initSec(){var r=ROLES.find(function(x){return x.id===S.role});S.sec=(r?r.def:'library')}
 if(!S.sec)initSec();
@@ -1631,16 +1659,58 @@ async function syncDBO(silent){
   }
   if(!fields.length)throw new Error('Cannot reach GitHub (timeout or network)');
   if(fields.length<100)throw new Error('Sync returned only '+fields.length+' fields \u2014 looks malformed, keeping baked list');
-  var prevCount=D.f.length;
+  // [SyncSummary] Capture previous list for diff before overwriting
+  var prevFields=D.f.slice();
   D.f=Array.from(new Set(fields));
   fieldSet=new Set(D.f);
   for(var i=0;i<points.length;i++){points[i][17]=fieldSet.has(points[i][11])?1:0;points[i][18]=isCompliantName(points[i][11])}
   var meta=getDboSyncMeta();meta.lastSync=new Date().toISOString();meta.fieldCount=D.f.length;setDboSyncMeta(meta);
-  var diff=D.f.length-prevCount;
-  var msg='\u2705 DBO synced: '+D.f.length+' fields'+(diff>0?' (+'+diff+' new)':diff<0?' ('+diff+')':' (no change)');
-  toast(msg);render();
- }catch(e){toast('\u274c '+e.message)}
+  // [SyncSummary] Compute added / removed field names for the notification
+  var prevSet=new Set(prevFields);
+  var newSet=fieldSet;
+  var added=D.f.filter(function(f){return!prevSet.has(f)});
+  var removed=prevFields.filter(function(f){return!newSet.has(f)});
+  var diff=D.f.length-prevFields.length;
+  if(added.length||removed.length){
+   // Something actually changed — show a rich card
+   showSyncSummaryCard(added,removed,meta.lastSync);
+   if(!silent)toast('\u2705 DBO synced \u2014 '+added.length+' added, '+removed.length+' removed');
+  }else{
+   // Nothing changed — one-line toast only
+   if(!silent)toast('\u2705 DBO up to date \u2014 '+D.f.length+' fields, no changes');
+  }
+  render();
+ }catch(e){if(!silent)toast('\u274c '+e.message);else console.log('DBO auto-sync failed:',e.message)}
  finally{if(btn){btn.classList.remove('spin');btn.disabled=false}}
+}
+
+// [SyncSummary] Show a dismissible notification card with the list of added/removed DBO fields.
+// Dismissible via the X or auto-hides after 25 seconds. Lands top-right, doesn't block the nav.
+function showSyncSummaryCard(added,removed,lastSyncISO){
+ var prev=document.getElementById('sync-summary-card');if(prev)prev.remove();
+ var when=(function(){try{var d=new Date(lastSyncISO);return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})}catch(e){return'just now'}})();
+ var c=document.createElement('div');c.id='sync-summary-card';c.className='sync-summary-card';
+ var h='<div class="ssc-head"><span class="ssc-icon">\u2699\ufe0f</span><div class="ssc-title-block"><div class="ssc-title">DBO updated</div><div class="ssc-sub">Synced '+when+' from Google Digital Buildings on GitHub</div></div><button class="ssc-close" onclick="document.getElementById(\'sync-summary-card\').remove()" aria-label="Dismiss">\u00d7</button></div>';
+ h+='<div class="ssc-body">';
+ if(added.length){
+  var preview=added.slice(0,8);
+  h+='<div class="ssc-row"><span class="ssc-badge add">+'+added.length+' new</span><div class="ssc-list">';
+  preview.forEach(function(f){h+='<span class="ssc-field">'+f+'</span>'});
+  if(added.length>preview.length)h+='<span class="ssc-more">+'+(added.length-preview.length)+' more</span>';
+  h+='</div></div>';
+ }
+ if(removed.length){
+  var previewR=removed.slice(0,8);
+  h+='<div class="ssc-row"><span class="ssc-badge rem">\u2212'+removed.length+' removed</span><div class="ssc-list">';
+  previewR.forEach(function(f){h+='<span class="ssc-field rem">'+f+'</span>'});
+  if(removed.length>previewR.length)h+='<span class="ssc-more">+'+(removed.length-previewR.length)+' more</span>';
+  h+='</div></div>';
+ }
+ h+='<div class="ssc-foot">Total: <strong>'+(D.f.length||'?')+'</strong> approved DBO fields</div>';
+ h+='</div>';
+ c.innerHTML=h;
+ document.body.appendChild(c);
+ setTimeout(function(){var el=document.getElementById('sync-summary-card');if(el)el.remove()},25000);
 }
 
 // Add/Edit/Delete
@@ -1758,6 +1828,12 @@ function renderNav(){
  h+='<button class="tour-trigger" onclick="openTourPicker(false)" title="Start a guided tour of the app by role"><span class="tour-trigger-dot" aria-hidden="true"></span>Guided Tour</button>';
  h+='<span class="auth-state">'+authName()+'</span>';
  h+='<button class="nb" onclick="toggleAdmin()" title="'+(adm?'Sign out MSI admin':'Sign in for MSI admin controls')+'">'+(adm?'Sign Out':'MSI Sign In')+'</button>';
+ // [FocusMode] Toggle — visible only when a role is picked
+ if(S.role){
+  var fmOn=!!S.focusMode;
+  var fmTitle=fmOn?'Focus mode ON — showing only your role\u2019s sections. Click to see everything.':'Focus mode OFF — showing all sections. Click to narrow to your role only.';
+  h+='<button class="nb nb-fm'+(fmOn?' on':'')+'" onclick="toggleFocusMode()" title="'+fmTitle+'"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="9"/></svg> Focus'+(fmOn?' ON':'')+'</button>';
+ }
  // [v15] Font size cycle — visible on every page
  h+='<button class="nb nb-fsz" onclick="cycleFont()" title="Cycle font size (sm / md / lg)">'+S.fontSz.toUpperCase()+'</button>';
  h+='<button class="nb c" onclick="toggleTheme()" title="Toggle dark/light mode">'+(dk?'\ud83c\udf19':'\u2600\ufe0f')+'</button>';
@@ -1836,10 +1912,13 @@ if(S.page==='welcome'){
  // [v15] Home page restructured to mirror in-app section hierarchy.
  // Groups: Data / Build & Validate / Reference / Workflow.
  h+='<div style="font-size:16px;font-weight:700;margin-bottom:4px">What do you want to do?</div>';
- h+='<div style="font-size:12px;color:var(--mu);margin-bottom:16px">'+(curRoleH?'Highlighted cards are recommended for your role.':'Pick a task or hit Enter App above.')+'</div>';
+ var _focusHint=S.focusMode&&curRoleH?' <strong style="color:var(--ac)">Focus mode ON</strong> \u2014 showing only your role\u2019s sections.':'';
+ h+='<div style="font-size:12px;color:var(--mu);margin-bottom:16px">'+(curRoleH?'Highlighted cards are recommended for your role.':'Pick a task or hit Enter App above.')+_focusHint+'</div>';
  var _rs=curRoleH?curRoleH.secs:[];
  function _hgcard(icon,title,desc,sec){
   var rec=_rs.indexOf(sec)>=0;
+  // [FocusMode] In focus mode, hide cards that aren't recommended for the current role
+  if(S.focusMode&&curRoleH&&sec!=='_export'&&sec!==curRoleH.def&&!rec)return'';
   var act=sec==='_export'?'showExport()':'goApp(\x27'+sec+'\x27)';
   return '<div class="hg-card'+(rec?' qa-rec':'')+'" onclick="'+act+'">'+(rec?'<div class="qa-rec-dot"></div>':'')+'<div class="hg-icon">'+icon+'</div><div class="hg-body"><div class="hg-title">'+title+'</div><div class="hg-desc">'+desc+'</div></div></div>';
  }
@@ -1898,13 +1977,20 @@ if(S.page==='welcome'){
  ];
  h+='<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-start">';
  secGroups.forEach(function(g){
+  // [FocusMode] Filter sections in focus mode to only recommended ones (keep the current section visible even if non-rec)
+  var _visibleSecs=g.secs.filter(function(s){return isRecSec(s.id)||S.sec===s.id});
+  if(_visibleSecs.length===0)return;
   h+='<div class="sec-group"><div class="sec-group-label">'+g.label+'</div><div class="sec-group-pills">';
-  g.secs.forEach(function(s){
+  _visibleSecs.forEach(function(s){
    var isRec=recSecs.indexOf(s.id)>=0;
    var dot=isRec&&S.sec!==s.id?'<span class="sec-rec-dot"></span>':'';
    var bd=isRec&&S.sec!==s.id?'1px solid var(--ac)':'none';
    h+='<button class="'+(S.sec===s.id?'on':'')+'" title="'+(isRec?'Recommended for your role':'')+'" style="padding:6px 14px;border-radius:980px;border:'+bd+';background:'+(S.sec===s.id?'var(--ac)':'var(--sf2)')+';color:'+(S.sec===s.id?'#fff':'var(--tx2)')+';font-size:11px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;white-space:nowrap" onmouseover="this.style.background=\x27'+(S.sec===s.id?'var(--ach)':'var(--bd2)')+'\x27" onmouseout="this.style.background=\x27'+(S.sec===s.id?'var(--ac)':'var(--sf2)')+'\x27" onclick="setSec(\x27'+s.id+'\x27)">'+dot+s.name+'</button>'});
   h+='</div></div>'});
+ // [FocusMode] Hint banner — remind the user focus mode is on and how to exit
+ if(S.focusMode&&curRoleN){
+  h+='</div><div style="background:var(--acbg);border:1px dashed var(--ac);border-radius:var(--rs);padding:8px 12px;margin-bottom:14px;font-size:11px;color:var(--tx2);display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-weight:600;color:var(--ac)">\u25CE Focus mode ON</span> \u2014 showing only the sections most relevant to <strong>'+curRoleN.name+'</strong>. <button onclick="toggleFocusMode()" style="margin-left:auto;padding:3px 10px;border-radius:980px;border:1px solid var(--bd);background:var(--sf);color:var(--tx2);font-size:10px;cursor:pointer;font-family:inherit">Turn off focus mode</button>';
+ }
  h+='</div>';
 
  // Current role howto
@@ -2472,8 +2558,22 @@ document.documentElement.setAttribute('data-fsz',S.fontSz||'md');
 // [v15] Seed history so the first browser-Back press doesn't leave the SPA
 try{window.history.replaceState({t:0},'','')}catch(e){}
 render();
-// [D5] Auto-sync DBO on load if scheduled and due
-if(dboSyncDue()){setTimeout(function(){syncDBO(true)},800)}
+// [AutoSync] Auto-sync DBO on every app open, provided:
+//  1. We're online (navigator.onLine — avoids a timeout on laptops with no Wi-Fi)
+//  2. The last sync wasn't in the last 10 minutes (avoids hammering GitHub on every reload)
+// On a successful sync with changes, a summary card lands top-right listing the added /
+// removed field names. No-op changes just update the "last synced" timestamp silently.
+(function autoSyncOnOpen(){
+ try{
+  if(typeof navigator!=='undefined'&&navigator.onLine===false)return;
+  var meta=getDboSyncMeta();
+  if(meta&&meta.lastSync){
+   var elapsed=Date.now()-new Date(meta.lastSync).getTime();
+   if(elapsed<10*60*1000)return; // synced < 10 minutes ago, skip
+  }
+  setTimeout(function(){syncDBO(true)},1200);
+ }catch(e){}
+})();
 
 // ========== DEMO PAGE: tab switching + role picker ==========
 (function(){
@@ -2621,12 +2721,29 @@ if(dboSyncDue()){setTimeout(function(){syncDBO(true)},800)}
    if (S.page === 'app' && typeof initSec === 'function') initSec();
    if (typeof render === 'function') render();
   }
-  state = { running:true, role:role, step:0, resizeTimer:null };
+  // [FocusMode×Tour] Auto-suspend Focus Mode for the duration of the tour so steps
+  // pointing at non-focus sections still render visibly in the nav. Restore on exit.
+  var focusWasOn = (typeof S !== 'undefined' && S.focusMode);
+  if (focusWasOn){ S.focusMode = false; if (typeof render === 'function') render(); }
+  state = { running:true, role:role, step:0, resizeTimer:null, navEnforcer:null, focusWasOn: focusWasOn };
   try{ localStorage.setItem('v18_tour_role', role); }catch(e){}
   try{ localStorage.removeItem('v18_tour_role_pending'); }catch(e){}
   ensureTourDOM();
   showStep(0);
   document.addEventListener('keydown', onKey);
+  // [Tour nav-enforcer] If the user clicks a section or nav while the tour is running
+  // and drifts away from the current step's section, gently snap back. Polls every
+  // 400ms — light enough to not feel jerky, fast enough to feel immediate.
+  state.navEnforcer = setInterval(function(){
+   if (!state.running) return;
+   if (typeof S === 'undefined') return;
+   var step = TOUR[state.role].steps[state.step];
+   if (!step || !step.sec) return;
+   if (S.page !== 'app' || S.sec !== step.sec){
+    // Drifted — re-run the current step to pull the user back
+    showStep(state.step);
+   }
+  }, 400);
  }
 
  function showStep(n){
@@ -2809,6 +2926,9 @@ if(dboSyncDue()){setTimeout(function(){syncDBO(true)},800)}
  function exitTour(){
   // User-initiated exit (Esc, × button, Skip) — stay where they are, just tear down the tour.
   state.running = false;
+  if (state.navEnforcer){ clearInterval(state.navEnforcer); state.navEnforcer = null; }
+  // [FocusMode×Tour] Restore focus mode if the tour auto-suspended it
+  if (state.focusWasOn && typeof S !== 'undefined'){ S.focusMode = true; if (typeof render === 'function') render(); }
   var root = $('tour-root');
   if (root) root.innerHTML = '';
   document.removeEventListener('keydown', onKey);
@@ -2816,6 +2936,9 @@ if(dboSyncDue()){setTimeout(function(){syncDBO(true)},800)}
  function finishTour(){
   // Natural completion (clicked Finish on the last step) — tear down AND go home.
   state.running = false;
+  if (state.navEnforcer){ clearInterval(state.navEnforcer); state.navEnforcer = null; }
+  // [FocusMode×Tour] Restore focus mode if the tour auto-suspended it
+  if (state.focusWasOn && typeof S !== 'undefined'){ S.focusMode = true; }
   var root = $('tour-root');
   if (root) root.innerHTML = '';
   document.removeEventListener('keydown', onKey);
