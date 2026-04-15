@@ -2708,13 +2708,19 @@ if(dboSyncDue()){setTimeout(function(){syncDBO(true)},800)}
   // Use AREA ratio rather than per-dimension checks: a wide-but-short search bar
   // has small area, a whole-section container has huge area. This works across
   // narrow preview viewports AND wide desktop viewports without tuning.
-  if (target){
+  //
+  // TINY-VIEWPORT GUARD: if vh is under 400 (DevTools docked, split-screen), the
+  // ring + dot + popover math can't all fit. Drop to centred-popover mode.
+  var tinyViewport = vh < 400;
+  if (target && !tinyViewport){
    var r = target.getBoundingClientRect();
    var areaRatio = (r.width * r.height) / (vw * vh);
    var tooBig = areaRatio > 0.7 || r.height > vh * 0.92;
    if (r.width === 0 || r.height === 0 || tooBig){
     target = null;
    }
+  } else if (tinyViewport){
+   target = null; // force centred popover on tiny viewports
   }
 
   if (target){
