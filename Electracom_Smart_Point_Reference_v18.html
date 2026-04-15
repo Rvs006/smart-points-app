@@ -184,26 +184,8 @@ html[data-fsz="lg"] body{zoom:1.15}
 /* [FocusMode] Focus-mode toggle */
 .nb-fm.on{background:var(--ac);color:#fff;border-color:var(--ac)}
 .nb-fm.on:hover{filter:brightness(1.1);background:var(--ac)}
-/* [SyncSummary] DBO sync notification card — top-right, dismissible, shows field-name diff */
-.sync-summary-card{position:fixed;top:68px;right:16px;z-index:150;width:360px;max-width:92vw;background:var(--sf);border:1px solid var(--bd);border-left:4px solid var(--ac);border-radius:var(--r);box-shadow:0 12px 40px rgba(0,0,0,.18);font-family:inherit;animation:sscSlide 260ms cubic-bezier(.16,1,.3,1)}
-@keyframes sscSlide{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
-.sync-summary-card .ssc-head{display:flex;align-items:flex-start;gap:10px;padding:12px 14px 8px}
-.sync-summary-card .ssc-icon{font-size:20px;line-height:1}
-.sync-summary-card .ssc-title-block{flex:1;min-width:0}
-.sync-summary-card .ssc-title{font-size:13px;font-weight:700;color:var(--tx);margin-bottom:2px}
-.sync-summary-card .ssc-sub{font-size:10px;color:var(--mu);line-height:1.4}
-.sync-summary-card .ssc-close{background:transparent;border:none;font-size:18px;line-height:1;color:var(--mu);cursor:pointer;padding:2px 6px;border-radius:4px;font-family:inherit}
-.sync-summary-card .ssc-close:hover{color:var(--tx);background:var(--trh)}
-.sync-summary-card .ssc-body{padding:4px 14px 12px}
-.sync-summary-card .ssc-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px}
-.sync-summary-card .ssc-badge{font-family:var(--fm);font-size:10px;font-weight:700;padding:3px 8px;border-radius:980px;flex-shrink:0;line-height:1.3}
-.sync-summary-card .ssc-badge.add{background:var(--gnbg);color:var(--gnt)}
-.sync-summary-card .ssc-badge.rem{background:var(--rdbg);color:var(--rdt)}
-.sync-summary-card .ssc-list{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
-.sync-summary-card .ssc-field{font-family:var(--fm);font-size:10px;background:var(--sf2);color:var(--tx2);padding:2px 6px;border-radius:4px;word-break:break-all}
-.sync-summary-card .ssc-field.rem{text-decoration:line-through;color:var(--mu2)}
-.sync-summary-card .ssc-more{font-size:10px;color:var(--mu);font-style:italic;padding:2px 0}
-.sync-summary-card .ssc-foot{font-size:10px;color:var(--mu);padding-top:8px;border-top:1px solid var(--bd);margin-top:6px}
+/* DBO details modal — opened by clicking the sync pill, shows last-sync diff */
+.dbo-modal{max-width:560px}
 /* Sync status pill in nav */
 .sync-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border-radius:980px;font-size:10px;font-weight:600;background:var(--sf2);border:1px solid var(--bd);color:var(--mu);cursor:pointer;font-family:inherit}
 .sync-pill.fresh{color:var(--gnt);border-color:var(--gn)}
@@ -1699,58 +1681,80 @@ async function syncDBO(silent){
   }
   if(!fields.length)throw new Error('Cannot reach GitHub (timeout or network)');
   if(fields.length<100)throw new Error('Sync returned only '+fields.length+' fields \u2014 looks malformed, keeping baked list');
-  // [SyncSummary] Capture previous list for diff before overwriting
+  // Capture previous list for diff before overwriting
   var prevFields=D.f.slice();
   D.f=Array.from(new Set(fields));
   fieldSet=new Set(D.f);
   for(var i=0;i<points.length;i++){points[i][17]=fieldSet.has(points[i][11])?1:0;points[i][18]=isCompliantName(points[i][11])}
-  var meta=getDboSyncMeta();meta.lastSync=new Date().toISOString();meta.fieldCount=D.f.length;setDboSyncMeta(meta);
-  // [SyncSummary] Compute added / removed field names for the notification
+  // Compute added / removed
   var prevSet=new Set(prevFields);
   var newSet=fieldSet;
-  var added=D.f.filter(function(f){return!prevSet.has(f)});
-  var removed=prevFields.filter(function(f){return!newSet.has(f)});
-  var diff=D.f.length-prevFields.length;
-  if(added.length||removed.length){
-   // Something actually changed — show a rich card
-   showSyncSummaryCard(added,removed,meta.lastSync);
-   if(!silent)toast('\u2705 DBO synced \u2014 '+added.length+' added, '+removed.length+' removed');
-  }else{
-   // Nothing changed — one-line toast only
-   if(!silent)toast('\u2705 DBO up to date \u2014 '+D.f.length+' fields, no changes');
+  var addedF=D.f.filter(function(f){return!prevSet.has(f)});
+  var removedF=prevFields.filter(function(f){return!newSet.has(f)});
+  // Persist the diff into sync meta so clicking the pill later can show what changed
+  var meta=getDboSyncMeta();
+  meta.lastSync=new Date().toISOString();
+  meta.fieldCount=D.f.length;
+  // Cap stored diff at 50 each side to avoid bloating localStorage if a huge upstream shift happens
+  meta.lastAdded=addedF.slice(0,50);
+  meta.lastRemoved=removedF.slice(0,50);
+  meta.lastAddedCount=addedF.length;
+  meta.lastRemovedCount=removedF.length;
+  setDboSyncMeta(meta);
+  // Quiet success: the nav pill updates colour + timestamp. No popup, no auto-card.
+  // If user wants detail they click the pill.
+  if(!silent){
+   if(addedF.length||removedF.length){
+    toast('\u2705 DBO synced \u2014 '+addedF.length+' added, '+removedF.length+' removed. Click the DBO pill to see details.');
+   }else{
+    toast('\u2705 DBO up to date \u2014 '+D.f.length+' fields, no changes');
+   }
   }
   render();
  }catch(e){if(!silent)toast('\u274c '+e.message);else console.log('DBO auto-sync failed:',e.message)}
  finally{if(btn){btn.classList.remove('spin');btn.disabled=false}}
 }
 
-// [SyncSummary] Show a dismissible notification card with the list of added/removed DBO fields.
-// Dismissible via the X or auto-hides after 25 seconds. Lands top-right, doesn't block the nav.
-function showSyncSummaryCard(added,removed,lastSyncISO){
- var prev=document.getElementById('sync-summary-card');if(prev)prev.remove();
- var when=(function(){try{var d=new Date(lastSyncISO);return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})}catch(e){return'just now'}})();
- var c=document.createElement('div');c.id='sync-summary-card';c.className='sync-summary-card';
- var h='<div class="ssc-head"><span class="ssc-icon">\u2699\ufe0f</span><div class="ssc-title-block"><div class="ssc-title">DBO updated</div><div class="ssc-sub">Synced '+when+' from Google Digital Buildings on GitHub</div></div><button class="ssc-close" onclick="document.getElementById(\'sync-summary-card\').remove()" aria-label="Dismiss">\u00d7</button></div>';
- h+='<div class="ssc-body">';
- if(added.length){
-  var preview=added.slice(0,8);
-  h+='<div class="ssc-row"><span class="ssc-badge add">+'+added.length+' new</span><div class="ssc-list">';
-  preview.forEach(function(f){h+='<span class="ssc-field">'+f+'</span>'});
-  if(added.length>preview.length)h+='<span class="ssc-more">+'+(added.length-preview.length)+' more</span>';
-  h+='</div></div>';
+// DBO pill click-handler. Opens a modal showing last-sync details + diff, with a "Sync now" button.
+// Replaces the previous behaviour of auto-popping a summary card after every sync.
+function showDboDetails(){
+ var m=getDboSyncMeta();
+ var when=(function(){
+  if(!m.lastSync)return'never';
+  try{var d=new Date(m.lastSync);return d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})+' at '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})}catch(e){return'unknown'}
+ })();
+ var addedCount=m.lastAddedCount||0,removedCount=m.lastRemovedCount||0;
+ var added=m.lastAdded||[],removed=m.lastRemoved||[];
+ var anyChange=addedCount>0||removedCount>0;
+ var h='<div class="modal-bg" onclick="if(event.target===this)hideModal()">';
+ h+='<div class="modal dbo-modal">';
+ h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="var(--ac)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V10l4-3 4 3v11"/><path d="M13 21V13l4-2 4 2v8"/><circle cx="9" cy="13" r="1" fill="currentColor"/><circle cx="9" cy="17" r="1" fill="currentColor"/><circle cx="17" cy="16" r="1" fill="currentColor"/></svg>';
+ h+='<div><h2 style="margin:0;font-size:16px">Google Digital Buildings Ontology</h2><div style="font-size:11px;color:var(--mu);font-family:var(--fm)">'+D.f.length+' approved fields \u00b7 last synced '+when+'</div></div></div>';
+ h+='<div style="font-size:12px;color:var(--tx2);line-height:1.55;margin-bottom:14px;padding:10px 14px;background:var(--sf2);border-radius:var(--rs);border-left:3px solid var(--ac)">Auto-sync runs on every app open when you\'re online. The pill in the nav turns green when the library is fresh and amber when it\'s been more than 14 days since the last sync.</div>';
+ if(anyChange){
+  h+='<div style="font-size:12px;font-weight:700;margin-bottom:8px">Changes at last sync</div>';
+  if(addedCount>0){
+   h+='<div style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-family:var(--fm);font-size:10px;font-weight:700;background:var(--gnbg);color:var(--gnt);padding:2px 8px;border-radius:980px">+'+addedCount+' added</span></div>';
+   h+='<div style="display:flex;flex-wrap:wrap;gap:4px">';
+   added.forEach(function(f){h+='<span style="font-family:var(--fm);font-size:10px;background:var(--sf2);color:var(--tx2);padding:2px 6px;border-radius:4px">'+f+'</span>'});
+   if(addedCount>added.length)h+='<span style="font-size:10px;color:var(--mu);font-style:italic;padding:2px 0">+'+(addedCount-added.length)+' more</span>';
+   h+='</div></div>';
+  }
+  if(removedCount>0){
+   h+='<div style="margin-bottom:10px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-family:var(--fm);font-size:10px;font-weight:700;background:var(--rdbg);color:var(--rdt);padding:2px 8px;border-radius:980px">\u2212'+removedCount+' removed</span></div>';
+   h+='<div style="display:flex;flex-wrap:wrap;gap:4px">';
+   removed.forEach(function(f){h+='<span style="font-family:var(--fm);font-size:10px;background:var(--sf2);color:var(--mu2);padding:2px 6px;border-radius:4px;text-decoration:line-through">'+f+'</span>'});
+   if(removedCount>removed.length)h+='<span style="font-size:10px;color:var(--mu);font-style:italic;padding:2px 0">+'+(removedCount-removed.length)+' more</span>';
+   h+='</div></div>';
+  }
+ } else if(m.lastSync){
+  h+='<div style="font-size:12px;color:var(--mu);padding:12px 0;text-align:center;font-style:italic">No changes at last sync \u2014 the vocabulary is stable.</div>';
+ } else {
+  h+='<div style="font-size:12px;color:var(--mu);padding:12px 0;text-align:center;font-style:italic">Never synced. Click &ldquo;Sync now&rdquo; to pull the latest DBO vocabulary from Google.</div>';
  }
- if(removed.length){
-  var previewR=removed.slice(0,8);
-  h+='<div class="ssc-row"><span class="ssc-badge rem">\u2212'+removed.length+' removed</span><div class="ssc-list">';
-  previewR.forEach(function(f){h+='<span class="ssc-field rem">'+f+'</span>'});
-  if(removed.length>previewR.length)h+='<span class="ssc-more">+'+(removed.length-previewR.length)+' more</span>';
-  h+='</div></div>';
- }
- h+='<div class="ssc-foot">Total: <strong>'+(D.f.length||'?')+'</strong> approved DBO fields</div>';
- h+='</div>';
- c.innerHTML=h;
- document.body.appendChild(c);
- setTimeout(function(){var el=document.getElementById('sync-summary-card');if(el)el.remove()},25000);
+ h+='<div class="ma"><button class="btn-s" onclick="hideModal()">Close</button><button class="btn-p" onclick="hideModal();syncDBO()">\u27f3 Sync now</button></div>';
+ h+='</div></div>';
+ document.getElementById('mr').innerHTML=h;
 }
 
 // Add/Edit/Delete
@@ -1865,7 +1869,9 @@ function renderNav(){
   // [DBO logo] Small SVG mark — a stylised building + DBO brand wordmark — next to the
   // sync pill so the "DBO" label reads as a Google Digital Buildings indicator, not just
   // three letters of mystery text.
-  h+='<button id="sb" class="sync-pill '+(_stale?'stale':'fresh')+'" onclick="syncDBO()" title="Click to sync DBO fields from GitHub now. Last synced: '+_ago+'">';
+  // Click opens a modal with the last sync summary + a "Sync now" button. Auto-sync on
+  // open keeps this up to date silently; the user clicks to SEE what changed.
+  h+='<button id="sb" class="sync-pill '+(_stale?'stale':'fresh')+'" onclick="showDboDetails()" title="Click to see what changed in DBO. Last synced: '+_ago+'">';
   h+='<svg class="dbo-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="Google Digital Buildings Ontology">';
   h+=  '<path d="M3 21h18" />';                                   // ground
   h+=  '<path d="M5 21V10l4-3 4 3v11" />';                        // left building
@@ -2674,38 +2680,44 @@ render();
    { sec:'lookup', sel:'.rp', scroll:true, title:'Browse the vocabulary', body:'DBO Lookup is the ontology reference. Fields (approved full names) on the left, subfields (the building blocks) on the right. Search either side to check whether a word is on the approved list.' },
    { sec:'builder', sel:'.bfree input', scroll:true, title:'Assemble a name', body:'Type a full name in the free-text box, or open the <strong>advanced dropdowns</strong> below to snap subfields together in the correct order. The result assembles live as you type.' },
    { sec:'builder', sel:'.bfree input', scroll:true, title:'Watch validation live', body:'Type something in the free-text box: a valid name shows a green pass, an invalid one shows the specific rule broken. Try <code>temp_status</code> \u2014 the validator flags that temperature is analogue and <code>_status</code> is for binary points, and suggests the fix.' },
-   { sec:'submit', sel:'#upDbo', scroll:true, title:'Submit for review', body:'When your name is valid, paste it into the DBO name field here. Live validation runs as you type. Add a description, fill in project &amp; asset, and click Submit \u2014 your proposal enters the admin review queue.' }
+   { sec:'submit', sel:'#upDbo', scroll:true, title:'Submit for review', body:'When your name is valid, paste it into the DBO name field here. Live validation runs as you type. Add a description, fill in project &amp; asset, and click Submit \u2014 your proposal enters the admin review queue.' },
+   { sec:'library', sel:'.nb-fm', scroll:false, title:'Quiet your view with Focus', body:'When the full nav feels like too much, click the <strong>Focus</strong> button in the top bar. It shrinks the section nav + home cards to just the sections most relevant to your role. Click again to turn it off. Your choice is remembered.' }
   ]},
   solutions: { label: 'Solutions Engineer', icon: '\ud83d\udcca', lead: 'Scan, compare, size, export.', steps: [
    { sec:'library', sel:'[data-tour="library-system-tabs"]', scroll:true, title:'Scan the whole library', body:'Cycle through the system tabs \u2014 BMS / MEP, EMS, PMS, Fire, Access, Lifts, Lighting, CCTV. Each holds its own slice. A fast way to gauge coverage before pitching.' },
    { sec:'projects', sel:'[data-tour="project-cards"]', scroll:true, title:'Compare projects side-by-side', body:'One card per project, with its point count and DBO compliance percentage at a glance. Click any card to see its full list \u2014 useful for "what did we capture there that we don\'t have here?" conversations.' },
    { sec:'scope', sel:'[data-tour="tender-toolbar"]', scroll:true, title:'Size a tender', body:'Enter equipment quantities below. The <strong>Typical / Max</strong> pill in this toolbar toggles between a realistic single-install count and the worst-case union \u2014 each row shows both numbers so the output is never ambiguous.' },
-   { sec:'library', sel:'button[onclick="exportExcel()"]', scroll:true, title:'Export a client handover', body:'Apply any filter, then click <strong>Excel</strong> here \u2014 you\'ll get a multi-sheet workbook with the filtered points on one sheet and a DBO reference sheet built in. Filtered exports include <code>_filtered</code> in the filename so the scope is never ambiguous.' }
+   { sec:'library', sel:'button[onclick="exportExcel()"]', scroll:true, title:'Export a client handover', body:'Apply any filter, then click <strong>Excel</strong> here \u2014 you\'ll get a multi-sheet workbook with the filtered points on one sheet and a DBO reference sheet built in. Filtered exports include <code>_filtered</code> in the filename so the scope is never ambiguous.' },
+   { sec:'library', sel:'.nb-fm', scroll:false, title:'Quiet your view with Focus', body:'When the full nav feels like too much, click the <strong>Focus</strong> button in the top bar. It shrinks the section nav + home cards to just the sections most relevant to your role. Click again to turn it off. Your choice is remembered.' }
   ]},
   commissioning: { label: 'Commissioning Engineer', icon: '\ud83d\udd27', lead: 'Find, narrow, verify, export.', steps: [
    { sec:'equipment', sel:'.eq-card', scroll:true, title:'Open the equipment', body:'Click any asset card (AHU, FCU, VAV, etc.) to open its detail panel. The panel shows every point associated with that equipment across all projects, plus a coverage summary against the standard baseline.' },
    { sec:'equipment', sel:'.eq-card', scroll:true, title:'Drill into the subtype', body:'Once an asset is open, a pill bar inside the panel lists variants seen on real jobs \u2014 AHU TYPE-1, AHU TYPE-2, and so on. Clicking one narrows the point list to just that variant, closer to what you\'ll find on site.' },
    { sec:'catalog', sel:'[data-tour="catalog-toolbar"]', scroll:true, title:'Check manufacturer context', body:'The Subtype Catalogue filters and searches each subtype record \u2014 manufacturer, model, suggested point mappings (required, optional, observed extras). Use this on site to see what a unit <em>should</em> carry.' },
-   { sec:'equipment', sel:'.eq-card', scroll:true, title:'Export the site checklist', body:'Back in By Equipment, once you\'ve drilled into an asset + subtype, the per-equipment export button at the bottom of the detail panel downloads a CSV with a filename matching the asset and subtype \u2014 ready as a site checklist.' }
+   { sec:'equipment', sel:'.eq-card', scroll:true, title:'Export the site checklist', body:'Back in By Equipment, once you\'ve drilled into an asset + subtype, the per-equipment export button at the bottom of the detail panel downloads a CSV with a filename matching the asset and subtype \u2014 ready as a site checklist.' },
+   { sec:'equipment', sel:'.nb-fm', scroll:false, title:'Quiet your view with Focus', body:'When the full nav feels like too much, click the <strong>Focus</strong> button in the top bar. It shrinks the section nav + home cards to just the sections most relevant to your role. Click again to turn it off. Your choice is remembered.' }
   ]},
   admin: { label: 'Administrator', icon: '\ud83d\udee1\ufe0f', lead: 'Sign in, review, curate, audit, sync.', steps: [
    { sec:'library', sel:'.nav button[onclick="toggleAdmin()"]', scroll:false, title:'Sign in first', body:'The <strong>MSI Sign In</strong> button in the top-right of the nav unlocks admin controls. Signing in reveals add / edit / delete / import / approve / edit-metadata buttons wherever they apply.' },
    { sec:'submit', sel:['[data-tour="review-queue-header"]','[data-tour="submit-form"]'], scroll:true, title:'Work the review queue', body:'Signed in, this section becomes the Review Queue. Pending submissions from design engineers are listed \u2014 approve, reject, or request a change on each. Approved points land in the main library immediately. <em>Sign in via MSI to see the queue.</em>' },
    { sec:'catalog', sel:'[data-tour="catalog-toolbar"]', scroll:true, title:'Curate catalogue metadata', body:'Pick any subtype in the list, click <strong>Edit Metadata</strong> on its detail, and capture manufacturer, model, and notes. Changes persist in this browser across reloads.' },
    { sec:'validation', sel:'[data-tour="validation-stats"]', scroll:true, title:'Audit the library', body:'The Errors / Clean / Checked summary gives you a delivery-ready audit. Below it, a single errors table covers every custom-added point that breaks a rule \u2014 structural, vocabulary, or semantic. Work it top-down before a delivery.' },
-   { sec:'library', sel:'#sb', scroll:false, title:'Keep the vocabulary fresh', body:'The <strong>DBO sync pill</strong> in the nav shows freshness at a glance. Click to sync now. Toggle weekly auto-sync from the File menu so the check runs without you thinking about it.' }
+   { sec:'library', sel:'#sb', scroll:false, title:'Keep the vocabulary fresh', body:'The <strong>DBO sync pill</strong> in the nav shows freshness at a glance. Auto-syncs on every open when online. Click it any time to see what changed and sync now.' },
+   { sec:'library', sel:'.nb-fm', scroll:false, title:'Quiet your view with Focus', body:'When the full nav feels like too much, click the <strong>Focus</strong> button in the top bar. It shrinks the section nav + home cards to just the sections most relevant to your role. Click again to turn it off. Your choice is remembered.' }
   ]},
   developer: { label: 'Software Developer', icon: '\ud83d\udcbb', lead: 'Library, vocabulary, connections, MQTT.', steps: [
    { sec:'library', sel:'[data-tour="library-search"]', scroll:true, title:'Canonical point list', body:'The Point Library is the data contract your integrations consume. Each row has a canonical DBO name, object type, data type, unit, access, and an MQTT topic preview. Filter by system or compliance and export as JSON for round-tripping.' },
    { sec:'lookup', sel:'.rp', scroll:true, title:'Field &amp; subfield vocabulary', body:'DBO Lookup is the subfield index you can treat as a schema definition. The left pane is every approved full field name; the right is every subfield with its category. Use this when building validators or publishers that need to verify tokens.' },
    { sec:'connections', sel:'.main', scroll:true, title:'Connections, units &amp; hierarchy', body:'Connection types (feeds, contains, hasPart), standard units (celsius, pascal, percent), and the spatial hierarchy (site \u2192 building \u2192 floor \u2192 zone). The data model your services will publish into.' },
-   { sec:'submit', sel:'#upDbo', scroll:true, title:'Submit proposed points', body:'If your integration surfaces a new kind of point, validate it here first. Live validation is the same ruleset you should embed in your publisher, so what passes the Builder will pass your pipeline.' }
+   { sec:'submit', sel:'#upDbo', scroll:true, title:'Submit proposed points', body:'If your integration surfaces a new kind of point, validate it here first. Live validation is the same ruleset you should embed in your publisher, so what passes the Builder will pass your pipeline.' },
+   { sec:'submit', sel:'.nb-fm', scroll:false, title:'Quiet your view with Focus', body:'When the full nav feels like too much, click the <strong>Focus</strong> button in the top bar. It shrinks the section nav + home cards to just the sections most relevant to your role. Click again to turn it off. Your choice is remembered.' }
   ]},
   architect: { label: 'Solutions Architect', icon: '\ud83c\udfd7\ufe0f', lead: 'Entities, connections, sizing.', steps: [
    { sec:'entities', sel:'.main', scroll:true, title:'Entity types', body:'Each equipment family (AHU, FCU, CHILLER, VAV&hellip;) has a required + optional point set defined at the ontology level. This is the baseline you design integrations against.' },
    { sec:'catalog', sel:'[data-tour="catalog-toolbar"]', scroll:true, title:'Subtype mapping', body:'For each subtype, the catalogue shows the required / optional / observed-extras split. Useful when deciding what to include in a model-specific config profile.' },
    { sec:'scope', sel:'[data-tour="tender-toolbar"]', scroll:true, title:'Sizing by equipment quantity', body:'Typical vs Max mode: Typical is the max distinct points seen on any one project; Max is the union across every project. Use Typical for realistic scope, Max for defensive sizing.' },
-   { sec:'connections', sel:'.main', scroll:true, title:'Building model reference', body:'Connection relations and the spatial hierarchy. This is the shape of the model you\'ll compose in a platform-independent way.' }
+   { sec:'connections', sel:'.main', scroll:true, title:'Building model reference', body:'Connection relations and the spatial hierarchy. This is the shape of the model you\'ll compose in a platform-independent way.' },
+   { sec:'connections', sel:'.nb-fm', scroll:false, title:'Quiet your view with Focus', body:'When the full nav feels like too much, click the <strong>Focus</strong> button in the top bar. It shrinks the section nav + home cards to just the sections most relevant to your role. Click again to turn it off. Your choice is remembered.' }
   ]}
  };
 
